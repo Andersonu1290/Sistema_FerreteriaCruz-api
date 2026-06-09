@@ -1,0 +1,4 @@
+Para usar el servicio tomcat te pedirá usuario y contraseña:
+
+Usuario: admin
+Contraseña:1234
