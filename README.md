@@ -1,4 +1,4 @@
-# 🛠️ Sistema de Gestión - Ferretería Cruz (Sercoplus)
+# 🛠️ Sistema de Gestión - Ferretería Cruz
 
 ![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![Apache Tomcat](https://img.shields.io/badge/Apache%20Tomcat-F8DC75?style=for-the-badge&logo=apachetomcat&logoColor=black)
@@ -91,41 +91,6 @@ Una vez levantado el sistema, puedes ingresar con el siguiente usuario por defec
 * **Contraseña:** `123456`
 * **Rol:** Administrador General
 
----
-
-## 📸 Capturas de Pantalla
-
-*(Nota: Añade capturas de tu sistema aquí para que el repositorio luzca más atractivo)*
-## PARA ESTOS EJEMPLOS DE LAS VISTAS SE UTILIZO PRODUCTOS GAMING/TECNOLOGIA COMO PRUEBA SOLAMENTE.
-* *Login*
-* <img width="705" height="881" alt="image" src="https://github.com/user-attachments/assets/3b2debe4-53b1-48e2-95fd-c149bf7037a4" />
-
-* *Dashboard / Inventario*
-* <img width="934" height="738" alt="image" src="https://github.com/user-attachments/assets/8ce95075-686f-40a0-ba5d-da3b39651e22" />
-* <img width="955" height="697" alt="image" src="https://github.com/user-attachments/assets/b1946eda-04c9-4f39-ac91-c878cf41cb90" />
-
-* *Punto de Venta*
-* <img width="890" height="919" alt="image" src="https://github.com/user-attachments/assets/2786be19-3c7f-4e37-a1b9-a8a844a24468" />
-
-* *Gestion de Mermas*
-* <img width="943" height="602" alt="image" src="https://github.com/user-attachments/assets/7283ac19-3a31-4147-97bf-7124a85b9cbf" />
-
-* *Auditoría de Kardex Valorizado*
-* <img width="959" height="560" alt="image" src="https://github.com/user-attachments/assets/5e97c04e-0d20-497c-bdb7-afebd5f68631" />
-
-* *Módulo de Seguridad y Gestión de Personal*
-* <img width="1050" height="553" alt="image" src="https://github.com/user-attachments/assets/1089122f-ce75-45b2-9888-4c38c9532506" />
-
-* *Formulario de Registro y Mantenimiento de Hardware*
-* <img width="885" height="975" alt="image" src="https://github.com/user-attachments/assets/a6a85265-5634-4ce5-ac1b-3cc408fee71d" />
-
-* *Historial Transaccional y Anulaciones*
-* <img width="963" height="542" alt="image" src="https://github.com/user-attachments/assets/84651c73-1aa5-4a5f-8f4b-8450c26d0915" />
-
-* *Historial Transaccional y Anulaciones*
-* <img width="1050" height="945" alt="image" src="https://github.com/user-attachments/assets/9fc63b0c-d095-442d-b222-fcf7cf82a2f1" />
-
- 
 ---
 
 ## 🤝 Contribución
