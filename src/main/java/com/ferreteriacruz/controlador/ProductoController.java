@@ -3,6 +3,9 @@ package com.ferreteriacruz.controlador;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +27,9 @@ import com.ferreteriacruz.servicio.ServicioProducto;
 @RequestMapping("/api/v1/productos")
 @CrossOrigin(origins = "*") // Permite la conexión segura con cualquier frontend
 public class ProductoController {
+
+    // Logback (via SLF4J) - Issue #11
+    private static final Logger log = LoggerFactory.getLogger(ProductoController.class);
 
     private final ServicioProducto servicioProducto;
 
@@ -98,9 +104,11 @@ public class ProductoController {
             producto.setStockMinimo(stockMinimo);
             producto.setPrecio(precio);
 
-            // Si el cliente adjuntó una imagen, extraemos sus bytes de forma nativa con Spring
+            // Si el cliente adjuntó una imagen, extraemos sus bytes con Apache Commons IO
+            // (IOUtils.toByteArray maneja el stream de forma segura y cierra recursos)
             if (imagenFile != null && !imagenFile.isEmpty()) {
-                producto.setImagen(imagenFile.getBytes());
+                producto.setImagen(IOUtils.toByteArray(imagenFile.getInputStream()));
+                log.debug("Imagen recibida para producto SKU={}, {} bytes", codigoSKU, producto.getImagen().length);
             } else if (idProducto != 0) {
                 // Si estamos editando y no enviaron imagen nueva, recuperamos la imagen anterior para no borrarla
                 Producto prodExistente = servicioProducto.buscarProducto(idProducto);
@@ -113,7 +121,7 @@ public class ProductoController {
             servicioProducto.guardarProducto(producto);
 
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(Map.of("mensaje", "Producto procesado y guardado correctamente en la botica."));
+                    .body(Map.of("mensaje", "Producto procesado y guardado correctamente en la ferretería."));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

@@ -4,6 +4,10 @@ import com.ferreteriacruz.modelo.Producto;
 import com.ferreteriacruz.modelo.Series;
 import com.ferreteriacruz.repository.ProductoRepository;
 import com.ferreteriacruz.repository.SeriesRepository;
+import com.google.common.base.Preconditions;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,7 +17,10 @@ import java.util.Optional;
 
 @Service
 public class ServicioProducto implements IConsultaStock, IRegistroProducto {
-    
+
+    // Logback (vía SLF4J) - Issue #11
+    private static final Logger log = LoggerFactory.getLogger(ServicioProducto.class);
+
     private final ProductoRepository productoRepository;
     private final SeriesRepository seriesRepository;
 
@@ -49,8 +56,20 @@ public class ServicioProducto implements IConsultaStock, IRegistroProducto {
      */
     @Transactional(rollbackFor = Exception.class)
     public boolean guardarProducto(Producto p) {
+        // Guava: validación defensiva de argumentos (falla rápido con mensaje claro)
+        Preconditions.checkNotNull(p, "El producto no puede ser nulo");
+        Preconditions.checkArgument(StringUtils.isNotBlank(p.getCodigoSKU()), "El código SKU es obligatorio");
+        Preconditions.checkArgument(StringUtils.isNotBlank(p.getNombre()), "El nombre del producto es obligatorio");
+        Preconditions.checkArgument(p.getStockActual() >= 0, "El stock actual no puede ser negativo");
+
+        // Apache Commons Lang3: normaliza espacios y capitalización del nombre/SKU
+        p.setCodigoSKU(StringUtils.trim(p.getCodigoSKU()).toUpperCase());
+        p.setNombre(StringUtils.normalizeSpace(p.getNombre()));
+
         int diferenciaStock = 0;
         boolean esNuevo = (p.getIdProducto() == 0);
+
+        log.debug("Guardando producto SKU={} nombre='{}' esNuevo={}", p.getCodigoSKU(), p.getNombre(), esNuevo);
 
         if (esNuevo) {
             // Guardamos el producto y recuperamos la entidad con el ID autogenerado por MySQL
@@ -123,8 +142,10 @@ public class ServicioProducto implements IConsultaStock, IRegistroProducto {
     public boolean eliminarProducto(int id) {
         if (productoRepository.existsById(id)) {
             productoRepository.deleteById(id);
+            log.info("Producto id={} eliminado del inventario", id);
             return true;
         }
+        log.warn("Intento de eliminar producto inexistente id={}", id);
         return false;
     }
     
