@@ -1,37 +1,58 @@
 package com.ferreteriacruz.servicio;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.ferreteriacruz.modelo.Producto;
+import com.ferreteriacruz.repository.CategoriaRepository;
 import com.ferreteriacruz.repository.ProductoRepository;
 import com.ferreteriacruz.repository.SeriesRepository;
 import com.ferreteriacruz.repository.VentaRepository;
 import com.ferreteriacruz.repository.VentaClienteRepository;
 import com.ferreteriacruz.modelo.Venta;
+import com.ferreteriacruz.modelo.Categoria;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 
 @Service
 public class ServicioReporte implements IGeneraReporte {
+
+    // Logback (vía SLF4J) - Issue #11
+    private static final Logger log = LoggerFactory.getLogger(ServicioReporte.class);
 
     private final ProductoRepository productoRepository;
     private final VentaRepository ventaRepository;
     private final VentaClienteRepository ventaClienteRepository; 
     private final SeriesRepository seriesRepository;
+    private final CategoriaRepository categoriaRepository;
 
     public ServicioReporte(ProductoRepository productoRepository, 
                            VentaRepository ventaRepository, 
                            VentaClienteRepository ventaClienteRepository,
-                           SeriesRepository seriesRepository) {
+                           SeriesRepository seriesRepository,
+                           CategoriaRepository categoriaRepository) {
         this.productoRepository = productoRepository;
         this.ventaRepository = ventaRepository;
         this.ventaClienteRepository = ventaClienteRepository;
         this.seriesRepository = seriesRepository;
+        this.categoriaRepository = categoriaRepository;
     }
 
     @Override
@@ -142,6 +163,70 @@ public class ServicioReporte implements IGeneraReporte {
         consolidadas.sort((a, b) -> b.getFecha().compareTo(a.getFecha()));
 
         return consolidadas.stream().limit(5).collect(Collectors.toList());
+    }
+
+    /**
+     * Genera un reporte de inventario en formato Excel (.xlsx) usando Apache POI.
+     * Agrupa los productos por categoría usando un Multimap de Guava.
+     * (Issue #11: uso de Apache POI + Google Guava)
+     */
+    public byte[] generarReporteInventarioExcel() throws IOException {
+        log.info("Generando reporte de inventario en Excel");
+
+        List<Producto> productos = productoRepository.findAll();
+        Map<Integer, String> nombresCategoria = categoriaRepository.findAll().stream()
+                .collect(Collectors.toMap(Categoria::getIdCategoria, Categoria::getNombre));
+
+        Multimap<String, Producto> porCategoria = ArrayListMultimap.create();
+        for (Producto p : productos) {
+            String categoria = nombresCategoria.getOrDefault(p.getIdCategoria(), "Sin Categoria");
+            porCategoria.put(categoria, p);
+        }
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+
+            Sheet sheet = workbook.createSheet("Inventario Ferreteria Cruz");
+
+            CellStyle estiloTitulo = workbook.createCellStyle();
+            Font fuenteTitulo = workbook.createFont();
+            fuenteTitulo.setBold(true);
+            estiloTitulo.setFont(fuenteTitulo);
+
+            int filaActual = 0;
+            for (String categoria : porCategoria.keySet()) {
+                Row filaCategoria = sheet.createRow(filaActual++);
+                Cell celdaCategoria = filaCategoria.createCell(0);
+                celdaCategoria.setCellValue(categoria);
+                celdaCategoria.setCellStyle(estiloTitulo);
+
+                Row encabezado = sheet.createRow(filaActual++);
+                String[] columnas = {"SKU", "Nombre", "Stock Actual", "Stock Minimo", "Precio Unit."};
+                for (int i = 0; i < columnas.length; i++) {
+                    Cell c = encabezado.createCell(i);
+                    c.setCellValue(columnas[i]);
+                    c.setCellStyle(estiloTitulo);
+                }
+
+                for (Producto p : porCategoria.get(categoria)) {
+                    Row fila = sheet.createRow(filaActual++);
+                    fila.createCell(0).setCellValue(p.getCodigoSKU());
+                    fila.createCell(1).setCellValue(p.getNombre());
+                    fila.createCell(2).setCellValue(p.getStockActual());
+                    fila.createCell(3).setCellValue(p.getStockMinimo());
+                    fila.createCell(4).setCellValue(p.getPrecio());
+                }
+                filaActual++;
+            }
+
+            for (int i = 0; i < 5; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            workbook.write(out);
+            log.debug("Reporte Excel generado con {} productos en {} categorias", productos.size(), porCategoria.keySet().size());
+            return out.toByteArray();
+        }
     }
 
     // Clase auxiliar

@@ -1,19 +1,25 @@
 package com.ferreteriacruz.servicio;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.ferreteriacruz.modelo.Usuario;
 import com.ferreteriacruz.repository.UsuarioRepository;
-
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
 public class ServicioUsuarioTest {
@@ -51,11 +57,15 @@ public class ServicioUsuarioTest {
     void testRegistrarNuevoPersonal_existingUsername_returnsFalse() {
         Usuario u = new Usuario();
         u.setUsername("exists");
+        u.setPassword("123456");   // <-- agregar
+    
         when(usuarioRepository.existsByUsername("exists")).thenReturn(true);
-
+    
         boolean ok = servicioUsuario.registrarNuevoPersonal(u);
+    
         assertFalse(ok);
         verify(usuarioRepository, never()).save(any());
+        verify(passwordEncoder, never()).encode(anyString());
     }
 
 }

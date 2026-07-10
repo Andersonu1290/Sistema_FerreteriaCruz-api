@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ferreteriacruz.config.JwtUtil; // 🔥 1. IMPORTANTE AÑADIR ESTO
 import com.ferreteriacruz.modelo.Usuario;
 import com.ferreteriacruz.servicio.ServicioUsuario;
 
@@ -21,37 +22,29 @@ import com.ferreteriacruz.servicio.ServicioUsuario;
 public class UsuarioController {
 
     private final ServicioUsuario servicioUsuario;
+    private final JwtUtil jwtUtil; // 🔥 2. DECLARAR EL UTILITARIO JWT
 
-    // Inyección de dependencias por constructor
-    public UsuarioController(ServicioUsuario servicioUsuario) {
+    // 🔥 3. INYECTARLO EN EL CONSTRUCTOR
+    public UsuarioController(ServicioUsuario servicioUsuario, JwtUtil jwtUtil) {
         this.servicioUsuario = servicioUsuario;
+        this.jwtUtil = jwtUtil;
     }
 
-    /**
-     * Endpoint: GET /api/v1/usuarios
-     * Reemplaza la acción "listar" del doGet de tu antiguo Servlet.
-     */
     @GetMapping
     public ResponseEntity<List<Usuario>> listarPersonal() {
         List<Usuario> usuarios = servicioUsuario.obtenerListaPersonal();
         return ResponseEntity.ok(usuarios);
     }
 
-    /**
-     * Endpoint: POST /api/v1/usuarios/registrar
-     * Reemplaza por completo el bloque "registrar" del doPost del Servlet.
-     * Consume un JSON con el payload del nuevo empleado y lo inserta si el username está disponible.
-     */
     @PostMapping("/registrar")
     public ResponseEntity<?> registrarUsuario(@RequestBody Usuario nuevoUsuario) {
+        // ... (Tu lógica para administradores se mantiene igual)
         try {
-            // Validaciones rápidas de campos obligatorios para el entorno REST
             if (nuevoUsuario.getUsername() == null || nuevoUsuario.getPassword() == null || nuevoUsuario.getRol() == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of("error", "Faltan datos requeridos: username, password o rol."));
             }
 
-            // Invocamos tu servicio el cual mapea al repositorio y valida duplicados
             boolean registrado = servicioUsuario.registrarNuevoPersonal(nuevoUsuario);
 
             if (registrado) {
@@ -61,7 +54,6 @@ public class UsuarioController {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body(Map.of("error", "El nombre de usuario '" + nuevoUsuario.getUsername() + "' ya se encuentra en uso."));
             }
-
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", "Ocurrió un error al procesar el registro: " + e.getMessage()));
@@ -70,8 +62,7 @@ public class UsuarioController {
 
     /**
      * Endpoint: POST /api/v1/usuarios/registro-tienda
-     * Registro público y exclusivo para compradores del e-commerce.
-     * Fuerza el rol 'CLIENTE' internamente para evitar escalada de privilegios.
+     * Ahora devuelve el Token JWT para que el frontend haga Auto-Login.
      */
     @PostMapping("/registro-tienda")
     public ResponseEntity<?> registrarClienteDesdeTienda(@RequestBody Usuario nuevoUsuario) {
@@ -81,14 +72,24 @@ public class UsuarioController {
                         .body(Map.of("error", "El usuario y la contraseña son obligatorios."));
             }
 
-            // Forzamos el rol de cliente, ignorando cualquier cosa que envíe el frontend
             nuevoUsuario.setRol("CLIENTE");
 
             boolean registrado = servicioUsuario.registrarNuevoPersonal(nuevoUsuario);
 
             if (registrado) {
+                // 🔥 4. GENERAR TOKEN AUTOMÁTICAMENTE
+                String token = jwtUtil.generateToken(nuevoUsuario.getUsername(), nuevoUsuario.getRol());
+                
+                // Limpiar la contraseña por seguridad antes de mandar el JSON
+                nuevoUsuario.setPassword(null);
+
+                // 🔥 5. DEVOLVER EL TOKEN Y EL USUARIO IGUAL QUE EN EL LOGIN
                 return ResponseEntity.status(HttpStatus.CREATED)
-                        .body(Map.of("mensaje", "Tu cuenta de cliente ha sido creada exitosamente."));
+                        .body(Map.of(
+                                "mensaje", "Tu cuenta de cliente ha sido creada exitosamente.",
+                                "token", token,
+                                "usuario", nuevoUsuario
+                        ));
             } else {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body(Map.of("error", "El nombre de usuario '" + nuevoUsuario.getUsername() + "' ya existe."));

@@ -2,6 +2,7 @@ com\ferreteriacruz\controlador\ProductoController.class
 com\ferreteriacruz\modelo\Categoria.class
 com\ferreteriacruz\modelo\Venta.class
 com\ferreteriacruz\controlador\MermaController.class
+com\ferreteriacruz\servicio\ServicioReporte$ProductoKpi.class
 com\ferreteriacruz\patrones\adapter\IServicioPago.class
 com\ferreteriacruz\repository\MermaRepository.class
 com\ferreteriacruz\patrones\observer\LogisticaObserver.class
@@ -18,6 +19,7 @@ com\ferreteriacruz\patrones\factory\ComprobanteFactory.class
 com\ferreteriacruz\controlador\CarritoController.class
 com\ferreteriacruz\patrones\strategy\PagoTransferencia.class
 com\ferreteriacruz\controlador\CategoriaController.class
+com\ferreteriacruz\config\SwaggerConfig.class
 com\ferreteriacruz\controlador\KardexController.class
 com\ferreteriacruz\servicio\ServicioVenta.class
 com\ferreteriacruz\dto\ItemCarritoDTO.class
@@ -36,6 +38,7 @@ com\ferreteriacruz\patrones\observer\NotificacionAdmin.class
 com\ferreteriacruz\config\JwtRequestFilter.class
 com\ferreteriacruz\dto\PedidoClienteRequestDTO.class
 com\ferreteriacruz\controlador\LoginController.class
+com\ferreteriacruz\dto\LoginRequestDTO.class
 com\ferreteriacruz\modelo\CarritoItem.class
 com\ferreteriacruz\config\JwtUtil.class
 com\ferreteriacruz\repository\CarritoRepository.class

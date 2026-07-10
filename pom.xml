@@ -103,6 +103,52 @@
 							<version>0.11.5</version>
 							<scope>runtime</scope>
 						</dependency>
+
+
+        <!--
+        ===================================================================
+        LIBRERÍAS DE APOYO A LA CODIFICACIÓN (Issue #11)
+        ===================================================================
+        -->
+
+        <!-- Google Guava: colecciones inmutables, Multimap, validaciones (Preconditions) -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>33.3.1-jre</version>
+        </dependency>
+
+        <!-- Apache POI: generación de reportes de inventario en Excel (.xlsx) -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>5.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.3.0</version>
+        </dependency>
+
+        <!-- Apache Commons Lang3: utilidades de String/validación -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+
+        <!-- Apache Commons IO: utilidades de manejo de streams/archivos (imágenes de productos) -->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.17.0</version>
+        </dependency>
+
+        <!-- Logback: ya viene incluido por spring-boot-starter-logging (transitivo),
+             se declara explícito para fijar versión y usarlo con logback-spring.xml -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+        </dependency>
 	</dependencies>
 
 	<build>

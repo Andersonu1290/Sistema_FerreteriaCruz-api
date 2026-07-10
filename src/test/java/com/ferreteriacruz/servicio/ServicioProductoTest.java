@@ -1,6 +1,7 @@
 package com.ferreteriacruz.servicio;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.util.List;
@@ -53,6 +54,7 @@ public class ServicioProductoTest {
         p.setIdProducto(0);
         p.setCodigoSKU("SKU-A");
         p.setStockActual(3);
+        p.setNombre("Producto de Prueba");
 
         when(productoRepository.save(any(Producto.class))).thenAnswer(inv -> {
             Producto saved = inv.getArgument(0);

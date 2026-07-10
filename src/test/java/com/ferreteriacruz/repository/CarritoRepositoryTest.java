@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 
-
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class CarritoRepositoryTest {
@@ -31,8 +30,16 @@ class CarritoRepositoryTest {
 
     @Test
     void findAndDeleteByUsuario_workAsExpected() {
-        Producto producto1 = productoRepository.save(crearProducto("SKU-CAR-1-" + UUID.randomUUID(), "Producto Carrito 1"));
-        Producto producto2 = productoRepository.save(crearProducto("SKU-CAR-2-" + UUID.randomUUID(), "Producto Carrito 2"));
+
+        // Limpiar posibles datos existentes de pruebas anteriores
+        carritoRepository.deleteByIdUsuario(12);
+        carritoRepository.deleteByIdUsuario(13);
+
+        Producto producto1 = productoRepository.save(
+                crearProducto("SKU-CAR-1-" + UUID.randomUUID(), "Producto Carrito 1"));
+
+        Producto producto2 = productoRepository.save(
+                crearProducto("SKU-CAR-2-" + UUID.randomUUID(), "Producto Carrito 2"));
 
         carritoRepository.save(crearItem(12, producto1.getIdProducto(), 2));
         carritoRepository.save(crearItem(12, producto2.getIdProducto(), 1));
@@ -40,7 +47,9 @@ class CarritoRepositoryTest {
 
         List<CarritoItem> items = carritoRepository.findByIdUsuario(12);
         assertEquals(2, items.size());
-        assertTrue(carritoRepository.findByIdUsuarioAndIdProducto(12, producto1.getIdProducto()).isPresent());
+
+        assertTrue(
+                carritoRepository.findByIdUsuarioAndIdProducto(12, producto1.getIdProducto()).isPresent());
 
         carritoRepository.deleteByIdUsuario(12);
 
@@ -49,7 +58,9 @@ class CarritoRepositoryTest {
     }
 
     private Producto crearProducto(String sku, String nombre) {
-        Categoria categoria = categoriaRepository.save(crearCategoria("Accesorios-" + UUID.randomUUID()));
+        Categoria categoria = categoriaRepository.save(
+                crearCategoria("Accesorios-" + UUID.randomUUID()));
+
         Producto producto = new Producto();
         producto.setIdCategoria(categoria.getIdCategoria());
         producto.setCodigoSKU(sku);
@@ -57,6 +68,7 @@ class CarritoRepositoryTest {
         producto.setStockActual(10);
         producto.setStockMinimo(1);
         producto.setPrecio(6.0);
+
         return producto;
     }
 
