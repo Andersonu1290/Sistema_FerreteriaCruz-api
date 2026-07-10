@@ -52,6 +52,7 @@ public class ServicioProductoTest {
         Producto p = new Producto();
         p.setIdProducto(0);
         p.setCodigoSKU("SKU-A");
+        p.setNombre("Producto de Prueba");
         p.setStockActual(3);
 
         when(productoRepository.save(any(Producto.class))).thenAnswer(inv -> {
