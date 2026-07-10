@@ -210,12 +210,17 @@ public class ServicioVentaCliente {
     public List<PedidoClienteResponseDTO> obtenerPedidosCliente(int idUsuario) {
         List<VentaCliente> ventas = ventaClienteRepository.findByIdUsuario(idUsuario);
 
+        // 🔥 OPTIMIZACIÓN: Traemos los productos a la RAM una sola vez
+        Map<Integer, String> mapaProductos = productoRepository.findAll().stream()
+                .collect(Collectors.toMap(Producto::getIdProducto, Producto::getNombre));
+
         return ventas.stream().map(venta -> {
+            // Trae los detalles del pedido específico
             List<DetalleVentaCliente> detalles = detalleVentaClienteRepository.findByIdVentaCliente(venta.getIdVentaCliente());
 
             List<DetalleVentaClienteDTO> detallesDTO = detalles.stream().map(d -> {
-                Optional<Producto> producto = productoRepository.findById(d.getIdProducto());
-                String nombreProducto = producto.map(Producto::getNombre).orElse("Producto");
+                // 🔥 OPTIMIZACIÓN: Ya no consulta a la BD por cada ítem, lo busca instantáneamente en el mapa
+                String nombreProducto = mapaProductos.getOrDefault(d.getIdProducto(), "Producto");
                 return new DetalleVentaClienteDTO(
                         d.getIdDetalle(), d.getIdProducto(), nombreProducto, d.getCantidad(),
                         d.getPrecioUnitario(), d.getSubtotal(), d.getDescuento()
