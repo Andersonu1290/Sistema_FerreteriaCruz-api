@@ -14,12 +14,16 @@ import org.springframework.http.ResponseEntity;
 
 import com.ferreteriacruz.modelo.Usuario;
 import com.ferreteriacruz.servicio.ServicioUsuario;
+import com.ferreteriacruz.config.JwtUtil; // 🔥 1. AÑADIMOS LA IMPORTACIÓN
 
 @ExtendWith(MockitoExtension.class)
 public class UsuarioControllerTest {
 
     @Mock
     private ServicioUsuario servicioUsuario;
+
+    @Mock
+    private JwtUtil jwtUtil; // 🔥 2. DECLARAMOS EL MOCK DE JWTUTIL
 
     @InjectMocks
     private UsuarioController usuarioController;
@@ -44,10 +48,14 @@ public class UsuarioControllerTest {
         Usuario u = new Usuario();
         u.setUsername("c");
         u.setPassword("p");
+        
+        // Le decimos a los mocks qué deben responder para que la prueba pase
         when(servicioUsuario.registrarNuevoPersonal(any())).thenReturn(true);
+        when(jwtUtil.generateToken(any(), any())).thenReturn("token-falso-123"); // 🔥 3. SIMULAMOS LA CREACIÓN DEL TOKEN
+        
         ResponseEntity<?> resp = usuarioController.registrarClienteDesdeTienda(u);
+        
         assertEquals(201, resp.getStatusCode().value());
         assertEquals("CLIENTE", u.getRol());
     }
 }
-
