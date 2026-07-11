@@ -6,12 +6,14 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="boticaestrella_backend" />
         <module name="ferreteriacruz_backend" />
       </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="boticaestrella_backend" options="-parameters" />
       <module name="ferreteriacruz_backend" options="-parameters" />
     </option>
   </component>

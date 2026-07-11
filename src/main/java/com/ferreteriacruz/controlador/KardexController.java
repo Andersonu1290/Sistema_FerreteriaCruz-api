@@ -10,23 +10,23 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ferreteriacruz.modelo.MovimientoKardex;
-import com.ferreteriacruz.repository.KardexRepository;
+import com.ferreteriacruz.dao.KardexDAO;
 
 @RestController
 @RequestMapping("/api/v1/kardex")
 @CrossOrigin(origins = "*")
 public class KardexController {
 
-    private final KardexRepository kardexRepository;
+    private final KardexDAO kardexDAO;
 
-    public KardexController(KardexRepository kardexRepository) {
-        this.kardexRepository = kardexRepository;
+    public KardexController(KardexDAO kardexDAO) {
+        this.kardexDAO = kardexDAO;
     }
 
     @GetMapping("/historial")
     public ResponseEntity<List<MovimientoKardex>> obtenerHistorialKardex() {
 
-        List<Object[]> resultados = kardexRepository.listarHistorialKardex();
+        List<Object[]> resultados = kardexDAO.listarHistorialKardex();
 
         List<MovimientoKardex> historial = resultados.stream().map(r -> {
 

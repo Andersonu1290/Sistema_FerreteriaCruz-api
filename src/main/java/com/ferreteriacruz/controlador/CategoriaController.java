@@ -15,30 +15,30 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ferreteriacruz.modelo.Categoria;
-import com.ferreteriacruz.repository.CategoriaRepository;
+import com.ferreteriacruz.dao.CategoriaDAO;
 
 @RestController
 @RequestMapping("/api/v1/categorias")
 @CrossOrigin(origins = "*")
 public class CategoriaController {
 
-    private final CategoriaRepository categoriaRepository;
+    private final CategoriaDAO categoriaDAO;
 
-    public CategoriaController(CategoriaRepository categoriaRepository) {
-        this.categoriaRepository = categoriaRepository;
+    public CategoriaController(CategoriaDAO categoriaDAO) {
+        this.categoriaDAO = categoriaDAO;
     }
 
     // GET /api/v1/categorias
     @GetMapping
     public ResponseEntity<List<Categoria>> listarCategorias() {
-        return ResponseEntity.ok(categoriaRepository.findAll());
+        return ResponseEntity.ok(categoriaDAO.findAll());
     }
 
     // POST /api/v1/categorias
     @PostMapping
     public ResponseEntity<?> guardarCategoria(@RequestBody Categoria categoria) {
         try {
-            return new ResponseEntity<>(categoriaRepository.save(categoria), HttpStatus.CREATED);
+            return new ResponseEntity<>(categoriaDAO.save(categoria), HttpStatus.CREATED);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error al guardar: " + e.getMessage());
         }
@@ -48,8 +48,8 @@ public class CategoriaController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminarCategoria(@PathVariable int id) {
         try {
-            if (categoriaRepository.existsById(id)) {
-                categoriaRepository.deleteById(id);
+            if (categoriaDAO.existsById(id)) {
+                categoriaDAO.deleteById(id);
                 return ResponseEntity.ok("Eliminado");
             }
             return ResponseEntity.notFound().build();

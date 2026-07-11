@@ -18,11 +18,11 @@ import com.ferreteriacruz.patrones.factory.ComprobanteFactory;
 import com.ferreteriacruz.patrones.factory.IComprobante;
 import com.ferreteriacruz.patrones.observer.GestorStock;
 import com.ferreteriacruz.patrones.strategy.IEstrategiaPago;
-import com.ferreteriacruz.repository.ClienteRepository;
-import com.ferreteriacruz.repository.KardexRepository;
-import com.ferreteriacruz.repository.ProductoRepository;
-import com.ferreteriacruz.repository.SeriesRepository;
-import com.ferreteriacruz.repository.VentaRepository;
+import com.ferreteriacruz.dao.ClienteDAO;
+import com.ferreteriacruz.dao.KardexDAO;
+import com.ferreteriacruz.dao.ProductoDAO;
+import com.ferreteriacruz.dao.SeriesDAO;
+import com.ferreteriacruz.dao.VentaDAO;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,19 +36,19 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class ServicioVentaTest {
 
     @Mock
-    private VentaRepository ventaRepository;
+    private VentaDAO ventaDAO;
 
     @Mock
-    private ClienteRepository clienteRepository;
+    private ClienteDAO clienteDAO;
 
     @Mock
-    private ProductoRepository productoRepository;
+    private ProductoDAO productoDAO;
 
     @Mock
-    private SeriesRepository seriesRepository;
+    private SeriesDAO seriesDAO;
 
     @Mock
-    private KardexRepository kardexRepository;
+    private KardexDAO kardexDAO;
 
     @Mock
     private ComprobanteFactory comprobanteFactory;
@@ -76,11 +76,11 @@ public class ServicioVentaTest {
     void setUp() {
         estrategiasPago = new HashMap<>();
         servicioVenta = new ServicioVenta(
-                ventaRepository,
-                clienteRepository,
-                productoRepository,
-                seriesRepository,
-                kardexRepository,
+                ventaDAO,
+                clienteDAO,
+                productoDAO,
+                seriesDAO,
+                kardexDAO,
                 estrategiasPago,
                 comprobanteFactory,
                 gestorStock
@@ -107,7 +107,7 @@ public class ServicioVentaTest {
         List<Series> disponibles = new ArrayList<>();
         disponibles.add(s);
 
-        when(seriesRepository.findByIdProductoAndEstado(idProducto, "DISPONIBLE")).thenReturn(disponibles);
+        when(seriesDAO.findByIdProductoAndEstado(idProducto, "DISPONIBLE")).thenReturn(disponibles);
 
         // Estrategia de pago
         IEstrategiaPago estrategia = mock(IEstrategiaPago.class);
@@ -124,7 +124,7 @@ public class ServicioVentaTest {
         clienteExistente.setIdCliente(77);
         clienteExistente.setDocumentoIdentidad(docCliente);
         clienteExistente.setNombreCompleto(nombreCliente);
-        when(clienteRepository.findByDocumentoIdentidad(docCliente)).thenReturn(Optional.of(clienteExistente));
+        when(clienteDAO.findByDocumentoIdentidad(docCliente)).thenReturn(Optional.of(clienteExistente));
 
         Producto producto = new Producto();
         producto.setIdProducto(idProducto);
@@ -132,7 +132,7 @@ public class ServicioVentaTest {
         producto.setStockMinimo(2);
         producto.setCodigoSKU("SKU-1");
         producto.setNombre("Prod A");
-        when(productoRepository.findById(idProducto)).thenReturn(Optional.of(producto));
+        when(productoDAO.findById(idProducto)).thenReturn(Optional.of(producto));
 
         Map<String, Object> resp = servicioVenta.procesarSalidaProducto(
                 idProducto, nroSerie, tipoComprobante, idUsuario,
@@ -143,20 +143,20 @@ public class ServicioVentaTest {
         assertEquals("PAGO_OK", resp.get("msgPago"));
         assertEquals("DOC_OK", resp.get("msgDoc"));
 
-        verify(ventaRepository).save(ventaCaptor.capture());
+        verify(ventaDAO).save(ventaCaptor.capture());
         Venta savedVenta = ventaCaptor.getValue();
         // No garantizamos el id del cliente en la entidad capturada en tests unitarios (mock),
         // pero verificamos que otros campos importantes estén presentes
         assertEquals(idUsuario, savedVenta.getIdUsuario());
         assertEquals(metodoPago, savedVenta.getMetodoPago());
 
-        verify(productoRepository).save(productoCaptor.capture());
+        verify(productoDAO).save(productoCaptor.capture());
         assertEquals(4, productoCaptor.getValue().getStockActual());
 
-        verify(seriesRepository).save(seriesCaptor.capture());
+        verify(seriesDAO).save(seriesCaptor.capture());
         assertEquals("ASIGNADO", seriesCaptor.getValue().getEstado());
 
-        verify(kardexRepository).save(kardexCaptor.capture());
+        verify(kardexDAO).save(kardexCaptor.capture());
         MovimientoKardex mk = kardexCaptor.getValue();
         assertEquals(idProducto, mk.getIdProducto());
     }

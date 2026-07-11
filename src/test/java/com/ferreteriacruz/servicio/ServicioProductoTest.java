@@ -8,10 +8,9 @@ import java.util.List;
 
 import com.ferreteriacruz.modelo.Producto;
 import com.ferreteriacruz.modelo.Series;
-import com.ferreteriacruz.repository.ProductoRepository;
-import com.ferreteriacruz.repository.SeriesRepository;
+import com.ferreteriacruz.dao.ProductoDAO;
+import com.ferreteriacruz.dao.SeriesDAO;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -24,10 +23,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class ServicioProductoTest {
 
     @Mock
-    private ProductoRepository productoRepository;
+    private ProductoDAO productoDAO;
 
     @Mock
-    private SeriesRepository seriesRepository;
+    private SeriesDAO seriesDAO;
 
     @InjectMocks
     private ServicioProducto servicioProducto;
@@ -37,7 +36,7 @@ public class ServicioProductoTest {
 
     @Test
     void testRegistrarNuevoProducto_savesProduct() {
-        when(productoRepository.save(any(Producto.class))).thenAnswer(inv -> {
+        when(productoDAO.save(any(Producto.class))).thenAnswer(inv -> {
             Producto p = inv.getArgument(0);
             p.setIdProducto(1);
             return p;
@@ -45,7 +44,7 @@ public class ServicioProductoTest {
 
         boolean res = servicioProducto.registrarNuevoProducto("SKU123", "Nombre");
         assertTrue(res);
-        verify(productoRepository).save(any(Producto.class));
+        verify(productoDAO).save(any(Producto.class));
     }
 
     @Test
@@ -56,7 +55,7 @@ public class ServicioProductoTest {
         p.setStockActual(3);
         p.setNombre("Producto de Prueba");
 
-        when(productoRepository.save(any(Producto.class))).thenAnswer(inv -> {
+        when(productoDAO.save(any(Producto.class))).thenAnswer(inv -> {
             Producto saved = inv.getArgument(0);
             saved.setIdProducto(42);
             return saved;
@@ -65,7 +64,7 @@ public class ServicioProductoTest {
         boolean res = servicioProducto.guardarProducto(p);
 
         assertTrue(res);
-        verify(seriesRepository).saveAll(seriesListCaptor.capture());
+        verify(seriesDAO).saveAll(seriesListCaptor.capture());
         List<Series> listas = seriesListCaptor.getValue();
         assertEquals(3, listas.size());
         for (Series s : listas) {

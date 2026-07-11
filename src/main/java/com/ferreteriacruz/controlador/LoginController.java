@@ -42,7 +42,7 @@ public class LoginController {
                     .body(Map.of("error", "Debe proporcionar obligatoriamente un usuario y una contraseña."));
         }
 
-        // Ejecutamos tu lógica del servicio que interactúa con UsuarioRepository
+        // Ejecutamos tu lógica del servicio que interactúa con UsuarioDAO
         Usuario usuario = servicioUsuario.validarAcceso(username, password);
 
         if (usuario != null) {

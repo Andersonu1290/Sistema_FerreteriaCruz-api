@@ -19,13 +19,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.ferreteriacruz.modelo.Usuario;
-import com.ferreteriacruz.repository.UsuarioRepository;
+import com.ferreteriacruz.dao.UsuarioDAO;
 
 @ExtendWith(MockitoExtension.class)
 public class ServicioUsuarioTest {
 
     @Mock
-    private UsuarioRepository usuarioRepository;
+    private UsuarioDAO usuarioDAO;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -39,7 +39,7 @@ public class ServicioUsuarioTest {
         u.setUsername("juan");
         u.setPassword("hash-pwd");
 
-        when(usuarioRepository.findByUsername("juan")).thenReturn(Optional.of(u));
+        when(usuarioDAO.findByUsername("juan")).thenReturn(Optional.of(u));
         when(passwordEncoder.matches("pwd", "hash-pwd")).thenReturn(true);
 
         Usuario res = servicioUsuario.validarAcceso("juan", "pwd");
@@ -49,7 +49,7 @@ public class ServicioUsuarioTest {
 
     @Test
     void testValidarAcceso_invalid_returnsNull() {
-        when(usuarioRepository.findByUsername("x")).thenReturn(Optional.empty());
+        when(usuarioDAO.findByUsername("x")).thenReturn(Optional.empty());
         assertNull(servicioUsuario.validarAcceso("x", "y"));
     }
 
@@ -59,12 +59,12 @@ public class ServicioUsuarioTest {
         u.setUsername("exists");
         u.setPassword("123456");   // <-- agregar
     
-        when(usuarioRepository.existsByUsername("exists")).thenReturn(true);
+        when(usuarioDAO.existsByUsername("exists")).thenReturn(true);
     
         boolean ok = servicioUsuario.registrarNuevoPersonal(u);
     
         assertFalse(ok);
-        verify(usuarioRepository, never()).save(any());
+        verify(usuarioDAO, never()).save(any());
         verify(passwordEncoder, never()).encode(anyString());
     }
 

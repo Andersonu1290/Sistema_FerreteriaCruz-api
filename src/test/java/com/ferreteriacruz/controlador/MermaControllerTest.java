@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.ferreteriacruz.modelo.Series;
-import com.ferreteriacruz.repository.MermaRepository;
+import com.ferreteriacruz.dao.MermaDAO;
 import com.ferreteriacruz.servicio.MermaService;
 
 import org.junit.jupiter.api.Test;
@@ -21,7 +21,7 @@ import org.springframework.http.ResponseEntity;
 public class MermaControllerTest {
 
     @Mock
-    private MermaRepository mermaRepository;
+    private MermaDAO mermaDAO;
 
     @Mock
     private MermaService mermaService;
@@ -34,7 +34,7 @@ public class MermaControllerTest {
         Object[] row = new Object[]{1, "SN1", 5, "DISPONIBLE", "Prod", "SKU"};
         java.util.List<Object[]> lista = new java.util.ArrayList<>();
         lista.add(row);
-        when(mermaRepository.listarSeriesConProducto("DISPONIBLE")).thenReturn(lista);
+        when(mermaDAO.listarSeriesConProducto("DISPONIBLE")).thenReturn(lista);
 
         ResponseEntity<List<Series>> resp = mermaController.listarSeriesPorEstado("DISPONIBLE");
         assertEquals(200, resp.getStatusCode().value());

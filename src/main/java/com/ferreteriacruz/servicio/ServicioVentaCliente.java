@@ -24,11 +24,11 @@ import com.ferreteriacruz.modelo.MovimientoKardex;
 import com.ferreteriacruz.modelo.Producto;
 import com.ferreteriacruz.modelo.VentaCliente;
 import com.ferreteriacruz.patrones.observer.GestorStock;
-import com.ferreteriacruz.repository.DetalleVentaClienteRepository;
-import com.ferreteriacruz.repository.KardexRepository;
-import com.ferreteriacruz.repository.ProductoRepository;
-import com.ferreteriacruz.repository.VentaClienteRepository;
-import com.ferreteriacruz.repository.SeriesRepository;
+import com.ferreteriacruz.dao.DetalleVentaClienteDAO;
+import com.ferreteriacruz.dao.KardexDAO;
+import com.ferreteriacruz.dao.ProductoDAO;
+import com.ferreteriacruz.dao.VentaClienteDAO;
+import com.ferreteriacruz.dao.SeriesDAO;
 import com.google.common.base.Preconditions;
 
 @Service
@@ -37,25 +37,25 @@ public class ServicioVentaCliente {
     // Logback (vía SLF4J) - Registra toda la actividad del Ecommerce
     private static final Logger log = LoggerFactory.getLogger(ServicioVentaCliente.class);
 
-    private final VentaClienteRepository ventaClienteRepository;
-    private final DetalleVentaClienteRepository detalleVentaClienteRepository;
-    private final ProductoRepository productoRepository;
-    private final KardexRepository kardexRepository;
+    private final VentaClienteDAO ventaClienteDAO;
+    private final DetalleVentaClienteDAO detalleVentaClienteDAO;
+    private final ProductoDAO productoDAO;
+    private final KardexDAO kardexDAO;
     private final GestorStock gestorStock;
-    private final SeriesRepository seriesRepository;
+    private final SeriesDAO seriesDAO;
 
-    public ServicioVentaCliente(VentaClienteRepository ventaClienteRepository,
-                                 DetalleVentaClienteRepository detalleVentaClienteRepository,
-                                 ProductoRepository productoRepository,
-                                 KardexRepository kardexRepository,
+    public ServicioVentaCliente(VentaClienteDAO ventaClienteDAO,
+                                 DetalleVentaClienteDAO detalleVentaClienteDAO,
+                                 ProductoDAO productoDAO,
+                                 KardexDAO kardexDAO,
                                  GestorStock gestorStock,
-                                 SeriesRepository seriesRepository) {
-        this.ventaClienteRepository = ventaClienteRepository;
-        this.detalleVentaClienteRepository = detalleVentaClienteRepository;
-        this.productoRepository = productoRepository;
-        this.kardexRepository = kardexRepository;
+                                 SeriesDAO seriesDAO) {
+        this.ventaClienteDAO = ventaClienteDAO;
+        this.detalleVentaClienteDAO = detalleVentaClienteDAO;
+        this.productoDAO = productoDAO;
+        this.kardexDAO = kardexDAO;
         this.gestorStock = gestorStock;
-        this.seriesRepository = seriesRepository;
+        this.seriesDAO = seriesDAO;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -102,7 +102,7 @@ public class ServicioVentaCliente {
             ventaCliente.setObservaciones(StringUtils.normalizeSpace(request.observaciones()));
             ventaCliente.setFechaEntregaEstimada(calcularFechaEntrega(request.tipoEnvio()));
 
-            VentaCliente ventaGuardada = ventaClienteRepository.save(ventaCliente);
+            VentaCliente ventaGuardada = ventaClienteDAO.save(ventaCliente);
             log.debug("Cabecera del pedido guardada: {}", nroPedido);
 
             List<DetalleVentaClienteDTO> detallesDTO = new ArrayList<>();
@@ -111,9 +111,9 @@ public class ServicioVentaCliente {
                         ventaGuardada.getIdVentaCliente(), item.idProducto(), item.cantidad(),
                         item.precioUnitario(), item.precioUnitario() * item.cantidad()
                 );
-                DetalleVentaCliente detalleGuardado = detalleVentaClienteRepository.save(detalle);
+                DetalleVentaCliente detalleGuardado = detalleVentaClienteDAO.save(detalle);
 
-                Producto producto = productoRepository.findById(item.idProducto())
+                Producto producto = productoDAO.findById(item.idProducto())
                         .orElseThrow(() -> new Exception("Producto no encontrado en BD"));
 
                 if (producto.getStockActual() < item.cantidad()) {
@@ -122,9 +122,9 @@ public class ServicioVentaCliente {
                 }
 
                 producto.setStockActual(producto.getStockActual() - item.cantidad());
-                productoRepository.save(producto);
+                productoDAO.save(producto);
 
-                List<com.ferreteriacruz.modelo.Series> seriesDisponibles = seriesRepository.findByIdProductoAndEstado(producto.getIdProducto(), "DISPONIBLE");
+                List<com.ferreteriacruz.modelo.Series> seriesDisponibles = seriesDAO.findByIdProductoAndEstado(producto.getIdProducto(), "DISPONIBLE");
                 
                 if (seriesDisponibles.size() < item.cantidad()) {
                     log.error("Desfase físico. Faltan cajas disponibles para: {}", producto.getNombre());
@@ -137,7 +137,7 @@ public class ServicioVentaCliente {
                     s.setEstado("ASIGNADO"); 
                     seriesAAsignar.add(s);
                 }
-                seriesRepository.saveAll(seriesAAsignar); 
+                seriesDAO.saveAll(seriesAAsignar); 
 
                 MovimientoKardex kardex = new MovimientoKardex();
                 kardex.setIdProducto(producto.getIdProducto());
@@ -146,7 +146,7 @@ public class ServicioVentaCliente {
                 kardex.setMotivo("Pedido Web: " + ventaGuardada.getNroPedido());
                 kardex.setIdUsuario(request.idUsuario());
                 kardex.setFecha(new Timestamp(System.currentTimeMillis()));
-                kardexRepository.save(kardex);
+                kardexDAO.save(kardex);
 
                 if (producto.getStockActual() <= producto.getStockMinimo()) {
                     log.warn("Alerta: El stock del producto {} bajó al límite", producto.getCodigoSKU());
@@ -180,13 +180,13 @@ public class ServicioVentaCliente {
     }
 
     public PedidoClienteResponseDTO obtenerPedidoPorId(int idVentaCliente) throws Exception {
-        VentaCliente venta = ventaClienteRepository.findById(idVentaCliente)
+        VentaCliente venta = ventaClienteDAO.findById(idVentaCliente)
                 .orElseThrow(() -> new Exception("Pedido no encontrado"));
 
-        List<DetalleVentaCliente> detalles = detalleVentaClienteRepository.findByIdVentaCliente(idVentaCliente);
+        List<DetalleVentaCliente> detalles = detalleVentaClienteDAO.findByIdVentaCliente(idVentaCliente);
 
         List<DetalleVentaClienteDTO> detallesDTO = detalles.stream().map(d -> {
-            Optional<Producto> producto = productoRepository.findById(d.getIdProducto());
+            Optional<Producto> producto = productoDAO.findById(d.getIdProducto());
             String nombreProducto = producto.map(Producto::getNombre).orElse("Producto");
             return new DetalleVentaClienteDTO(
                     d.getIdDetalle(), d.getIdProducto(), nombreProducto, d.getCantidad(),
@@ -208,15 +208,15 @@ public class ServicioVentaCliente {
     }
 
     public List<PedidoClienteResponseDTO> obtenerPedidosCliente(int idUsuario) {
-        List<VentaCliente> ventas = ventaClienteRepository.findByIdUsuario(idUsuario);
+        List<VentaCliente> ventas = ventaClienteDAO.findByIdUsuario(idUsuario);
 
         // 🔥 OPTIMIZACIÓN: Traemos los productos a la RAM una sola vez
-        Map<Integer, String> mapaProductos = productoRepository.findAll().stream()
+        Map<Integer, String> mapaProductos = productoDAO.findAll().stream()
                 .collect(Collectors.toMap(Producto::getIdProducto, Producto::getNombre));
 
         return ventas.stream().map(venta -> {
             // Trae los detalles del pedido específico
-            List<DetalleVentaCliente> detalles = detalleVentaClienteRepository.findByIdVentaCliente(venta.getIdVentaCliente());
+            List<DetalleVentaCliente> detalles = detalleVentaClienteDAO.findByIdVentaCliente(venta.getIdVentaCliente());
 
             List<DetalleVentaClienteDTO> detallesDTO = detalles.stream().map(d -> {
                 // 🔥 OPTIMIZACIÓN: Ya no consulta a la BD por cada ítem, lo busca instantáneamente en el mapa
@@ -243,7 +243,7 @@ public class ServicioVentaCliente {
 
     @Transactional(rollbackFor = Exception.class)
     public PedidoClienteResponseDTO actualizarEstadoPedido(int idVentaCliente, String nuevoEstado, String numeroSeguimiento) throws Exception {
-        VentaCliente venta = ventaClienteRepository.findById(idVentaCliente)
+        VentaCliente venta = ventaClienteDAO.findById(idVentaCliente)
                 .orElseThrow(() -> new Exception("Pedido no encontrado"));
         
         log.info("Actualizando estado de pedido {}: {} -> {}", venta.getNroPedido(), venta.getEstado(), nuevoEstado);
@@ -257,13 +257,13 @@ public class ServicioVentaCliente {
             venta.setFechaEntregaReal(LocalDateTime.now());
         }
 
-        VentaCliente ventaActualizada = ventaClienteRepository.save(venta);
+        VentaCliente ventaActualizada = ventaClienteDAO.save(venta);
         return obtenerPedidoPorId(ventaActualizada.getIdVentaCliente());
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void cancelarPedido(int idVentaCliente) throws Exception {
-        VentaCliente venta = ventaClienteRepository.findById(idVentaCliente)
+        VentaCliente venta = ventaClienteDAO.findById(idVentaCliente)
                 .orElseThrow(() -> new Exception("Pedido no encontrado"));
 
         if ("ENVIADO".equalsIgnoreCase(venta.getEstado()) || "ENTREGADO".equalsIgnoreCase(venta.getEstado())) {
@@ -273,22 +273,22 @@ public class ServicioVentaCliente {
         
         log.info("Cancelando pedido Web {} y devolviendo stock físico", venta.getNroPedido());
 
-        List<DetalleVentaCliente> detalles = detalleVentaClienteRepository.findByIdVentaCliente(idVentaCliente);
+        List<DetalleVentaCliente> detalles = detalleVentaClienteDAO.findByIdVentaCliente(idVentaCliente);
         for (DetalleVentaCliente detalle : detalles) {
-            Producto producto = productoRepository.findById(detalle.getIdProducto()).orElse(null);
+            Producto producto = productoDAO.findById(detalle.getIdProducto()).orElse(null);
             if (producto != null) {
                 
                 producto.setStockActual(producto.getStockActual() + detalle.getCantidad());
-                productoRepository.save(producto);
+                productoDAO.save(producto);
 
-                List<com.ferreteriacruz.modelo.Series> seriesAsignadas = seriesRepository.findByIdProductoAndEstado(producto.getIdProducto(), "ASIGNADO");
+                List<com.ferreteriacruz.modelo.Series> seriesAsignadas = seriesDAO.findByIdProductoAndEstado(producto.getIdProducto(), "ASIGNADO");
                 List<com.ferreteriacruz.modelo.Series> seriesALiberar = new ArrayList<>();
                 for (int i = 0; i < detalle.getCantidad() && i < seriesAsignadas.size(); i++) {
                     com.ferreteriacruz.modelo.Series s = seriesAsignadas.get(i);
                     s.setEstado("DISPONIBLE"); 
                     seriesALiberar.add(s);
                 }
-                seriesRepository.saveAll(seriesALiberar);
+                seriesDAO.saveAll(seriesALiberar);
 
                 MovimientoKardex kardex = new MovimientoKardex();
                 kardex.setIdProducto(producto.getIdProducto());
@@ -297,16 +297,16 @@ public class ServicioVentaCliente {
                 kardex.setMotivo("Cancelación Pedido Web: " + venta.getNroPedido());
                 kardex.setIdUsuario(venta.getIdUsuario());
                 kardex.setFecha(new Timestamp(System.currentTimeMillis()));
-                kardexRepository.save(kardex);
+                kardexDAO.save(kardex);
             }
         }
 
         venta.setEstado("CANCELADO");
-        ventaClienteRepository.save(venta);
+        ventaClienteDAO.save(venta);
     }
 
     public List<PedidoClienteResponseDTO> obtenerPedidosPorEstado(String estado) {
-        List<VentaCliente> ventas = ventaClienteRepository.findByEstado(StringUtils.trim(estado));
+        List<VentaCliente> ventas = ventaClienteDAO.findByEstado(StringUtils.trim(estado));
         return ventas.stream().map(venta -> {
             try {
                 return obtenerPedidoPorId(venta.getIdVentaCliente());
@@ -317,7 +317,7 @@ public class ServicioVentaCliente {
     }
 
     private String generarNumeroPedido() {
-        long numero = ventaClienteRepository.countTotalVentas() + 1;
+        long numero = ventaClienteDAO.countTotalVentas() + 1;
         return String.format("PED-%tY-%05d", LocalDateTime.now(), numero);
     }
 
@@ -338,15 +338,15 @@ public class ServicioVentaCliente {
      */
     public List<PedidoClienteResponseDTO> obtenerTodosLosPedidos() {
         // 1. Traemos cabeceras ordenadas (Consulta 1)
-        List<VentaCliente> ventas = ventaClienteRepository.findAll();
+        List<VentaCliente> ventas = ventaClienteDAO.findAll();
         ventas.sort((a, b) -> b.getFechaPedido().compareTo(a.getFechaPedido()));
 
         // 2. Traemos TODOS los productos a la RAM para acceso instantáneo (Consulta 2)
-        Map<Integer, String> mapaProductos = productoRepository.findAll().stream()
+        Map<Integer, String> mapaProductos = productoDAO.findAll().stream()
                 .collect(Collectors.toMap(Producto::getIdProducto, Producto::getNombre));
 
         // 3. Traemos TODOS los detalles y los agrupamos por ID de Venta (Consulta 3)
-        Map<Integer, List<DetalleVentaCliente>> mapaDetalles = detalleVentaClienteRepository.findAll().stream()
+        Map<Integer, List<DetalleVentaCliente>> mapaDetalles = detalleVentaClienteDAO.findAll().stream()
                 .collect(Collectors.groupingBy(DetalleVentaCliente::getIdVentaCliente));
 
         // 4. Ensamblamos todo en memoria (Sin tocar la BD en el bucle)

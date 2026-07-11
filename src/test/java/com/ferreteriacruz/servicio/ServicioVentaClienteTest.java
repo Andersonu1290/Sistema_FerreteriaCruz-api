@@ -22,11 +22,11 @@ import com.ferreteriacruz.modelo.Producto;
 import com.ferreteriacruz.modelo.Series;
 import com.ferreteriacruz.modelo.VentaCliente;
 import com.ferreteriacruz.patrones.observer.GestorStock;
-import com.ferreteriacruz.repository.DetalleVentaClienteRepository;
-import com.ferreteriacruz.repository.KardexRepository;
-import com.ferreteriacruz.repository.ProductoRepository;
-import com.ferreteriacruz.repository.SeriesRepository;
-import com.ferreteriacruz.repository.VentaClienteRepository;
+import com.ferreteriacruz.dao.DetalleVentaClienteDAO;
+import com.ferreteriacruz.dao.KardexDAO;
+import com.ferreteriacruz.dao.ProductoDAO;
+import com.ferreteriacruz.dao.SeriesDAO;
+import com.ferreteriacruz.dao.VentaClienteDAO;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,22 +40,22 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ServicioVentaClienteTest {
 
     @Mock
-    private VentaClienteRepository ventaClienteRepository;
+    private VentaClienteDAO ventaClienteDAO;
 
     @Mock
-    private DetalleVentaClienteRepository detalleVentaClienteRepository;
+    private DetalleVentaClienteDAO detalleVentaClienteDAO;
 
     @Mock
-    private ProductoRepository productoRepository;
+    private ProductoDAO productoDAO;
 
     @Mock
-    private KardexRepository kardexRepository;
+    private KardexDAO kardexDAO;
 
     @Mock
     private GestorStock gestorStock;
 
     @Mock
-    private SeriesRepository seriesRepository;
+    private SeriesDAO seriesDAO;
 
     @Captor
     private ArgumentCaptor<VentaCliente> ventaCaptor;
@@ -68,12 +68,12 @@ class ServicioVentaClienteTest {
     @BeforeEach
     void setUp() {
         servicioVentaCliente = new ServicioVentaCliente(
-                ventaClienteRepository,
-                detalleVentaClienteRepository,
-                productoRepository,
-                kardexRepository,
+                ventaClienteDAO,
+                detalleVentaClienteDAO,
+                productoDAO,
+                kardexDAO,
                 gestorStock,
-                seriesRepository
+                seriesDAO
         );
     }
 
@@ -83,22 +83,22 @@ class ServicioVentaClienteTest {
         Producto producto = crearProducto(1, 3, 3, "SKU-1", "Gel Antibacterial");
         List<Series> seriesDisponibles = crearSeriesDisponibles(1, 2);
 
-        when(ventaClienteRepository.countTotalVentas()).thenReturn(0L);
-        when(ventaClienteRepository.save(any(VentaCliente.class))).thenAnswer(invocation -> {
+        when(ventaClienteDAO.countTotalVentas()).thenReturn(0L);
+        when(ventaClienteDAO.save(any(VentaCliente.class))).thenAnswer(invocation -> {
             VentaCliente venta = invocation.getArgument(0);
             venta.setIdVentaCliente(99);
             return venta;
         });
-        when(detalleVentaClienteRepository.save(any(DetalleVentaCliente.class))).thenAnswer(invocation -> {
+        when(detalleVentaClienteDAO.save(any(DetalleVentaCliente.class))).thenAnswer(invocation -> {
             DetalleVentaCliente detalle = invocation.getArgument(0);
             detalle.setIdDetalle(11);
             return detalle;
         });
-        when(productoRepository.findById(1)).thenReturn(Optional.of(producto));
-        when(productoRepository.save(any(Producto.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(seriesRepository.findByIdProductoAndEstado(1, "DISPONIBLE")).thenReturn(seriesDisponibles);
-        when(seriesRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(kardexRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(productoDAO.findById(1)).thenReturn(Optional.of(producto));
+        when(productoDAO.save(any(Producto.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(seriesDAO.findByIdProductoAndEstado(1, "DISPONIBLE")).thenReturn(seriesDisponibles);
+        when(seriesDAO.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(kardexDAO.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         PedidoClienteResponseDTO response = servicioVentaCliente.crearPedido(request);
 
@@ -109,11 +109,11 @@ class ServicioVentaClienteTest {
         assertEquals(1, response.getDetalles().size());
         assertEquals("Gel Antibacterial", response.getDetalles().get(0).getNombreProducto());
 
-        verify(productoRepository).save(productoCaptor.capture());
+        verify(productoDAO).save(productoCaptor.capture());
         assertEquals(1, productoCaptor.getValue().getStockActual());
         verify(gestorStock).dispararAlertaStockCritico("SKU-1", 1);
-        verify(kardexRepository).save(any());
-        verify(ventaClienteRepository).save(ventaCaptor.capture());
+        verify(kardexDAO).save(any());
+        verify(ventaClienteDAO).save(ventaCaptor.capture());
         assertEquals(35.0, ventaCaptor.getValue().getTotal());
     }
 
@@ -123,9 +123,9 @@ class ServicioVentaClienteTest {
         DetalleVentaCliente detalle = crearDetalle(1, 15, 1, 2, 15.0, 30.0, 0.0);
         Producto producto = crearProducto(1, 10, 3, "SKU-1", "Jarabe");
 
-        when(ventaClienteRepository.findById(15)).thenReturn(Optional.of(venta));
-        when(detalleVentaClienteRepository.findByIdVentaCliente(15)).thenReturn(List.of(detalle));
-        when(productoRepository.findById(1)).thenReturn(Optional.of(producto));
+        when(ventaClienteDAO.findById(15)).thenReturn(Optional.of(venta));
+        when(detalleVentaClienteDAO.findByIdVentaCliente(15)).thenReturn(List.of(detalle));
+        when(productoDAO.findById(1)).thenReturn(Optional.of(producto));
 
         PedidoClienteResponseDTO response = servicioVentaCliente.obtenerPedidoPorId(15);
 
@@ -142,22 +142,22 @@ class ServicioVentaClienteTest {
         Producto producto = crearProducto(1, 3, 3, "SKU-2", "Crema");
         List<Series> seriesAsignadas = crearSeriesAsignadas(1, 2);
 
-        when(ventaClienteRepository.findById(18)).thenReturn(Optional.of(venta));
-        when(detalleVentaClienteRepository.findByIdVentaCliente(18)).thenReturn(List.of(detalle));
-        when(productoRepository.findById(1)).thenReturn(Optional.of(producto));
-        when(productoRepository.save(any(Producto.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(seriesRepository.findByIdProductoAndEstado(1, "ASIGNADO")).thenReturn(seriesAsignadas);
-        when(seriesRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(kardexRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(ventaClienteRepository.save(any(VentaCliente.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(ventaClienteDAO.findById(18)).thenReturn(Optional.of(venta));
+        when(detalleVentaClienteDAO.findByIdVentaCliente(18)).thenReturn(List.of(detalle));
+        when(productoDAO.findById(1)).thenReturn(Optional.of(producto));
+        when(productoDAO.save(any(Producto.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(seriesDAO.findByIdProductoAndEstado(1, "ASIGNADO")).thenReturn(seriesAsignadas);
+        when(seriesDAO.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(kardexDAO.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(ventaClienteDAO.save(any(VentaCliente.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         servicioVentaCliente.cancelarPedido(18);
 
-        verify(productoRepository).save(productoCaptor.capture());
+        verify(productoDAO).save(productoCaptor.capture());
         assertEquals(5, productoCaptor.getValue().getStockActual());
-        verify(seriesRepository).saveAll(any());
-        verify(kardexRepository).save(any());
-        verify(ventaClienteRepository).save(ventaCaptor.capture());
+        verify(seriesDAO).saveAll(any());
+        verify(kardexDAO).save(any());
+        verify(ventaClienteDAO).save(ventaCaptor.capture());
         assertEquals("CANCELADO", ventaCaptor.getValue().getEstado());
     }
 
@@ -189,7 +189,7 @@ class ServicioVentaClienteTest {
 
         Exception error = assertThrows(Exception.class, () -> servicioVentaCliente.crearPedido(request));
         assertEquals("Error al crear el pedido: El pedido debe contener al menos un producto", error.getMessage());
-        verify(ventaClienteRepository, never()).save(any());
+        verify(ventaClienteDAO, never()).save(any());
     }
 
     private PedidoClienteRequestDTO crearRequest(int idUsuario, int cantidad, double precioUnitario, double costoEnvio, String tipoEnvio) {

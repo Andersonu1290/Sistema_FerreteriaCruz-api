@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ferreteriacruz.modelo.Series;
-import com.ferreteriacruz.repository.MermaRepository;
+import com.ferreteriacruz.dao.MermaDAO;
 import com.ferreteriacruz.servicio.MermaService;
 
 @RestController
@@ -22,12 +22,12 @@ import com.ferreteriacruz.servicio.MermaService;
 @CrossOrigin(origins = "*")
 public class MermaController {
 
-    private final MermaRepository mermaRepository;
+    private final MermaDAO mermaDAO;
     private final MermaService mermaService;
 
     // Inyección por constructor
-    public MermaController(MermaRepository mermaRepository, MermaService mermaService) {
-        this.mermaRepository = mermaRepository;
+    public MermaController(MermaDAO mermaDAO, MermaService mermaService) {
+        this.mermaDAO = mermaDAO;
         this.mermaService = mermaService;
     }
 
@@ -39,7 +39,7 @@ public class MermaController {
     public ResponseEntity<List<Series>> listarSeriesPorEstado(
             @RequestParam(value = "estado", defaultValue = "DISPONIBLE") String estado) {
             
-        List<Object[]> resultados = mermaRepository.listarSeriesConProducto(estado);
+        List<Object[]> resultados = mermaDAO.listarSeriesConProducto(estado);
             
         List<Series> listaSeries = resultados.stream().map(r -> {
         

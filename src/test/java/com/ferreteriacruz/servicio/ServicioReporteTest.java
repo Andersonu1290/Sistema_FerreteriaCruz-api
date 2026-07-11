@@ -5,10 +5,10 @@ import static org.mockito.Mockito.*;
 
 import java.util.Map;
 
-import com.ferreteriacruz.repository.ProductoRepository;
-import com.ferreteriacruz.repository.SeriesRepository;
-import com.ferreteriacruz.repository.VentaClienteRepository;
-import com.ferreteriacruz.repository.VentaRepository;
+import com.ferreteriacruz.dao.ProductoDAO;
+import com.ferreteriacruz.dao.SeriesDAO;
+import com.ferreteriacruz.dao.VentaClienteDAO;
+import com.ferreteriacruz.dao.VentaDAO;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,27 +20,27 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class ServicioReporteTest {
 
     @Mock
-    private ProductoRepository productoRepository;
+    private ProductoDAO productoDAO;
 
     @Mock
-    private VentaRepository ventaRepository;
+    private VentaDAO ventaDAO;
 
     @Mock
-    private VentaClienteRepository ventaClienteRepository;
+    private VentaClienteDAO ventaClienteDAO;
 
     @Mock
-    private SeriesRepository seriesRepository;
+    private SeriesDAO seriesDAO;
 
     @InjectMocks
     private ServicioReporte servicioReporte;
 
     @Test
     void testGenerarResumenEjecutivo_returnsKPIs() {
-        when(productoRepository.obtenerTotalUnidadesStock()).thenReturn(100);
-        when(ventaRepository.contarVentasCompletadas()).thenReturn(25);
-        when(ventaClienteRepository.contarVentasCompletadasWeb()).thenReturn(5);
-        when(seriesRepository.countByEstado("MERMA")).thenReturn(3L);
-        when(productoRepository.contarStockCritico()).thenReturn(7);
+        when(productoDAO.obtenerTotalUnidadesStock()).thenReturn(100);
+        when(ventaDAO.contarVentasCompletadas()).thenReturn(25);
+        when(ventaClienteDAO.contarVentasCompletadasWeb()).thenReturn(5);
+        when(seriesDAO.countByEstado("MERMA")).thenReturn(3L);
+        when(productoDAO.contarStockCritico()).thenReturn(7);
 
         Map<String, Integer> kpis = servicioReporte.generarResumenEjecutivo();
 
@@ -51,9 +51,9 @@ public class ServicioReporteTest {
     }
 
     @Test
-    void testObtenerIngresosTotales_callsRepository() {
-        when(ventaRepository.obtenerTotalIngresos()).thenReturn(1234.56);
-        when(ventaClienteRepository.obtenerTotalIngresosWeb()).thenReturn(100.44);
+    void testObtenerIngresosTotales_callsDAO() {
+        when(ventaDAO.obtenerTotalIngresos()).thenReturn(1234.56);
+        when(ventaClienteDAO.obtenerTotalIngresosWeb()).thenReturn(100.44);
         double ingreso = servicioReporte.obtenerIngresosTotales();
         assertEquals(1335.0, ingreso);
     }

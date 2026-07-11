@@ -9,8 +9,8 @@ import java.util.Optional;
 
 import com.ferreteriacruz.modelo.Producto;
 import com.ferreteriacruz.modelo.CarritoItem;
-import com.ferreteriacruz.repository.CarritoRepository;
-import com.ferreteriacruz.repository.ProductoRepository;
+import com.ferreteriacruz.dao.CarritoDAO;
+import com.ferreteriacruz.dao.ProductoDAO;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,10 +25,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class ServicioCarritoTest {
 
     @Mock
-    private CarritoRepository carritoRepository;
+    private CarritoDAO carritoDAO;
 
     @Mock
-    private ProductoRepository productoRepository;
+    private ProductoDAO productoDAO;
 
     @InjectMocks
     private ServicioCarrito servicioCarrito;
@@ -52,8 +52,8 @@ public class ServicioCarritoTest {
         producto.setIdProducto(10);
         producto.setNombre("Medicamento X");
 
-        when(carritoRepository.findByIdUsuario(1)).thenReturn(lista);
-        when(productoRepository.findById(10)).thenReturn(Optional.of(producto));
+        when(carritoDAO.findByIdUsuario(1)).thenReturn(lista);
+        when(productoDAO.findById(10)).thenReturn(Optional.of(producto));
 
         List<CarritoItem> resultado = servicioCarrito.obtenerCarritoDeUsuario(1);
 
@@ -70,12 +70,12 @@ public class ServicioCarritoTest {
         existente.setIdProducto(10);
         existente.setCantidad(2);
 
-        when(carritoRepository.findByIdUsuarioAndIdProducto(1, 10)).thenReturn(Optional.of(existente));
+        when(carritoDAO.findByIdUsuarioAndIdProducto(1, 10)).thenReturn(Optional.of(existente));
 
         servicioCarrito.agregarOActualizarItem(1, 10, 3);
 
         // Verificamos que se guardó y la cantidad fue actualizada
-        verify(carritoRepository).save(carritoItemCaptor.capture());
+        verify(carritoDAO).save(carritoItemCaptor.capture());
         CarritoItem guardado = carritoItemCaptor.getValue();
         assertEquals(5, guardado.getCantidad());
         assertEquals(1, guardado.getIdUsuario());
@@ -84,11 +84,11 @@ public class ServicioCarritoTest {
 
     @Test
     void testAgregarOActualizarItem_whenNoExiste_savesNewItem() {
-        when(carritoRepository.findByIdUsuarioAndIdProducto(2, 20)).thenReturn(Optional.empty());
+        when(carritoDAO.findByIdUsuarioAndIdProducto(2, 20)).thenReturn(Optional.empty());
 
         servicioCarrito.agregarOActualizarItem(2, 20, 4);
 
-        verify(carritoRepository).save(carritoItemCaptor.capture());
+        verify(carritoDAO).save(carritoItemCaptor.capture());
         CarritoItem nuevo = carritoItemCaptor.getValue();
         assertEquals(2, nuevo.getIdUsuario());
         assertEquals(20, nuevo.getIdProducto());
@@ -98,13 +98,13 @@ public class ServicioCarritoTest {
     @Test
     void testEliminarItem_callsDeleteById() {
         servicioCarrito.eliminarItem(99);
-        verify(carritoRepository).deleteById(99);
+        verify(carritoDAO).deleteById(99);
     }
 
     @Test
     void testVaciarCarrito_callsDeleteByIdUsuario() {
         servicioCarrito.vaciarCarrito(7);
-        verify(carritoRepository).deleteByIdUsuario(7);
+        verify(carritoDAO).deleteByIdUsuario(7);
     }
 }
 

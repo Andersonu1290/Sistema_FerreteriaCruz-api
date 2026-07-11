@@ -22,47 +22,47 @@ import com.ferreteriacruz.patrones.factory.ComprobanteFactory;
 import com.ferreteriacruz.patrones.factory.IComprobante;
 import com.ferreteriacruz.patrones.observer.GestorStock;
 import com.ferreteriacruz.patrones.strategy.IEstrategiaPago;
-import com.ferreteriacruz.repository.ClienteRepository;
-import com.ferreteriacruz.repository.KardexRepository;
-import com.ferreteriacruz.repository.ProductoRepository;
-import com.ferreteriacruz.repository.SeriesRepository;
-import com.ferreteriacruz.repository.VentaRepository;
+import com.ferreteriacruz.dao.ClienteDAO;
+import com.ferreteriacruz.dao.KardexDAO;
+import com.ferreteriacruz.dao.ProductoDAO;
+import com.ferreteriacruz.dao.SeriesDAO;
+import com.ferreteriacruz.dao.VentaDAO;
 
 @Service
 public class ServicioVenta {
 
-    private final VentaRepository ventaRepository;
-    private final ClienteRepository clienteRepository;
-    private final ProductoRepository productoRepository;
-    private final SeriesRepository seriesRepository;
-    private final KardexRepository kardexRepository;
+    private final VentaDAO ventaDAO;
+    private final ClienteDAO clienteDAO;
+    private final ProductoDAO productoDAO;
+    private final SeriesDAO seriesDAO;
+    private final KardexDAO kardexDAO;
 
     private final Map<String, IEstrategiaPago> estrategiasPago;
     private final ComprobanteFactory comprobanteFactory;
     private final GestorStock gestorStock;
 
     public ServicioVenta(
-            VentaRepository ventaRepository,
-            ClienteRepository clienteRepository,
-            ProductoRepository productoRepository,
-            SeriesRepository seriesRepository,
-            KardexRepository kardexRepository,
+            VentaDAO ventaDAO,
+            ClienteDAO clienteDAO,
+            ProductoDAO productoDAO,
+            SeriesDAO seriesDAO,
+            KardexDAO kardexDAO,
             Map<String, IEstrategiaPago> estrategiasPago,
             ComprobanteFactory comprobanteFactory,
             GestorStock gestorStock
     ) {
-        this.ventaRepository = ventaRepository;
-        this.clienteRepository = clienteRepository;
-        this.productoRepository = productoRepository;
-        this.seriesRepository = seriesRepository;
-        this.kardexRepository = kardexRepository;
+        this.ventaDAO = ventaDAO;
+        this.clienteDAO = clienteDAO;
+        this.productoDAO = productoDAO;
+        this.seriesDAO = seriesDAO;
+        this.kardexDAO = kardexDAO;
         this.estrategiasPago = estrategiasPago;
         this.comprobanteFactory = comprobanteFactory;
         this.gestorStock = gestorStock;
     }
 
     public List<Venta> obtenerHistorialVentas() {
-        List<Object[]> resultados = ventaRepository.listarVentasConNombres();
+        List<Object[]> resultados = ventaDAO.listarVentasConNombres();
 
         return resultados.stream().map(r -> {
             Venta v = new Venta();
@@ -98,7 +98,7 @@ public class ServicioVenta {
     public List<Map<String, Object>> obtenerHistorialCliente(int idUsuario) {
     
         List<Object[]> resultados =
-                ventaRepository.listarMisComprasRealizadas(idUsuario);
+                ventaDAO.listarMisComprasRealizadas(idUsuario);
     
         System.out.println("ID Usuario recibido: " + idUsuario);
         System.out.println("Compras encontradas: " + resultados.size());
@@ -147,7 +147,7 @@ public class ServicioVenta {
 
         if (nroSerie != null && nroSerie.startsWith("WEB-")) {
             // 🛒 LÓGICA E-COMMERCE
-            List<Series> disponibles = seriesRepository.findByIdProductoAndEstado(idProducto, "DISPONIBLE");
+            List<Series> disponibles = seriesDAO.findByIdProductoAndEstado(idProducto, "DISPONIBLE");
 
             if (disponibles.isEmpty()) {
                 // ✨ MAGIA: Si no hay series en BD pero hay stock, creamos una "Caja Virtual" al vuelo
@@ -163,7 +163,7 @@ public class ServicioVenta {
             }
         } else {
             // 🏪 LÓGICA BOTICA FÍSICA
-            serieFisica = seriesRepository.findByNumeroSerieAndEstado(nroSerie, "DISPONIBLE")
+            serieFisica = seriesDAO.findByNumeroSerieAndEstado(nroSerie, "DISPONIBLE")
                     .orElseThrow(() -> new Exception("Serie no disponible o ya vendida: " + nroSerie));
         }
 
@@ -182,11 +182,11 @@ public class ServicioVenta {
             mensajeDoc = comp.generar(datos);
         }
 
-        Cliente cliente = clienteRepository.findByDocumentoIdentidad(docCliente)
+        Cliente cliente = clienteDAO.findByDocumentoIdentidad(docCliente)
                 .orElseGet(() -> {
                     Cliente c = new Cliente(docCliente, nombreCliente);
                     c.setCorreo(correoCliente != null ? correoCliente : "sin_correo@ferreteriacruz.com");
-                    return clienteRepository.save(c);
+                    return clienteDAO.save(c);
                 });
 
         Venta venta = new Venta();
@@ -200,13 +200,13 @@ public class ServicioVenta {
         venta.setEstado("COMPLETADA");
         venta.setFecha(new Date());
 
-        ventaRepository.save(venta);
+        ventaDAO.save(venta);
 
-        Producto producto = productoRepository.findById(idProducto)
+        Producto producto = productoDAO.findById(idProducto)
                 .orElseThrow(() -> new Exception("Producto no existe"));
 
         producto.setStockActual(producto.getStockActual() - 1);
-        productoRepository.save(producto);
+        productoDAO.save(producto);
 
         List<String> alertasFrontend = new ArrayList<>();
         if (producto.getStockActual() <= producto.getStockMinimo()) {
@@ -215,7 +215,7 @@ public class ServicioVenta {
         }
 
         serieFisica.setEstado("ASIGNADO");
-        seriesRepository.save(serieFisica);
+        seriesDAO.save(serieFisica);
 
         MovimientoKardex kardex = new MovimientoKardex();
         kardex.setIdProducto(idProducto);
@@ -225,7 +225,7 @@ public class ServicioVenta {
         kardex.setIdUsuario(idUsuario);
         kardex.setFecha(new Timestamp(System.currentTimeMillis()));
 
-        kardexRepository.save(kardex);
+        kardexDAO.save(kardex);
 
         Map<String, Object> respuestaFinal = new HashMap<>();
         respuestaFinal.put("msgPago", mensajePago);
@@ -242,7 +242,7 @@ public class ServicioVenta {
     @Transactional(rollbackFor = Exception.class)
     public boolean anularVenta(int idVenta, int idUsuario) throws Exception {
 
-        Venta venta = ventaRepository.findById(idVenta)
+        Venta venta = ventaDAO.findById(idVenta)
                 .orElseThrow(() -> new Exception("Venta no existe"));
 
         if ("ANULADA".equals(venta.getEstado())) {
@@ -250,19 +250,19 @@ public class ServicioVenta {
         }
 
         venta.setEstado("ANULADA");
-        ventaRepository.save(venta);
+        ventaDAO.save(venta);
 
-        Producto producto = productoRepository.findById(venta.getIdProducto())
+        Producto producto = productoDAO.findById(venta.getIdProducto())
                 .orElseThrow(() -> new Exception("Producto no existe"));
 
         producto.setStockActual(producto.getStockActual() + 1);
-        productoRepository.save(producto);
+        productoDAO.save(producto);
 
-        Series serie = seriesRepository.findByNumeroSerieAndEstado(venta.getNroSerie(), "ASIGNADO")
+        Series serie = seriesDAO.findByNumeroSerieAndEstado(venta.getNroSerie(), "ASIGNADO")
                 .orElseThrow(() -> new Exception("Serie no encontrada"));
 
         serie.setEstado("DISPONIBLE");
-        seriesRepository.save(serie);
+        seriesDAO.save(serie);
 
         MovimientoKardex kardex = new MovimientoKardex();
         kardex.setIdProducto(venta.getIdProducto());
@@ -272,13 +272,13 @@ public class ServicioVenta {
         kardex.setIdUsuario(idUsuario);
         kardex.setFecha(new Timestamp(System.currentTimeMillis()));
 
-        kardexRepository.save(kardex);
+        kardexDAO.save(kardex);
 
         return true;
     }
 
     // Buscador rápido de clientes para el autocompletado en caja
     public Cliente buscarClientePorDni(String dni) {
-        return clienteRepository.findByDocumentoIdentidad(dni).orElse(null);
+        return clienteDAO.findByDocumentoIdentidad(dni).orElse(null);
     }
 }

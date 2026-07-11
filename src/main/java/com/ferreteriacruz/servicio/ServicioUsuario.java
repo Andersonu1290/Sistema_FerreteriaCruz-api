@@ -12,7 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.ferreteriacruz.modelo.Usuario;
-import com.ferreteriacruz.repository.UsuarioRepository;
+import com.ferreteriacruz.dao.UsuarioDAO;
 import com.google.common.base.Preconditions;
 
 @Service // Marca esta clase como un componente de servicio de Spring
@@ -21,13 +21,13 @@ public class ServicioUsuario {
     // Logback (vía SLF4J) - Para auditoría de seguridad
     private static final Logger log = LoggerFactory.getLogger(ServicioUsuario.class);
 
-    private final UsuarioRepository usuarioRepository;
+    private final UsuarioDAO usuarioDAO;
     private final PasswordEncoder passwordEncoder;
 
     // Inyección de dependencias por constructor (Recomendado en Spring)
     @Autowired
-    public ServicioUsuario(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
-        this.usuarioRepository = usuarioRepository;
+    public ServicioUsuario(UsuarioDAO usuarioDAO, PasswordEncoder passwordEncoder) {
+        this.usuarioDAO = usuarioDAO;
         this.passwordEncoder = passwordEncoder != null ? passwordEncoder : new BCryptPasswordEncoder();
     }
 
@@ -42,7 +42,7 @@ public class ServicioUsuario {
             log.debug("Intentando validar acceso para el usuario: {}", cleanUser);
 
             // Buscamos por username y comparamos el hash con BCrypt
-            Optional<Usuario> usuarioOpt = usuarioRepository.findByUsername(cleanUser);
+            Optional<Usuario> usuarioOpt = usuarioDAO.findByUsername(cleanUser);
             if (usuarioOpt.isPresent()) {
                 Usuario u = usuarioOpt.get();
                 if (passwordEncoder.matches(pass, u.getPassword())) {
@@ -62,7 +62,7 @@ public class ServicioUsuario {
     }
 
     public List<Usuario> obtenerListaPersonal() {
-        return usuarioRepository.findAll(); // Método nativo de JpaRepository
+        return usuarioDAO.findAll(); // Método nativo de JpaDAO
     }
 
     public boolean registrarNuevoPersonal(Usuario usuario) {
@@ -75,7 +75,7 @@ public class ServicioUsuario {
         String cleanUser = StringUtils.trim(usuario.getUsername());
         usuario.setUsername(cleanUser);
 
-        if (usuarioRepository.existsByUsername(cleanUser)) {
+        if (usuarioDAO.existsByUsername(cleanUser)) {
             log.warn("Registro rechazado: El nombre de usuario '{}' ya se encuentra en uso", cleanUser);
             return false; // El usuario ya existe
         }
@@ -84,7 +84,7 @@ public class ServicioUsuario {
         
         // Encriptamos la contraseña antes de guardar
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
-        usuarioRepository.save(usuario); // Método nativo
+        usuarioDAO.save(usuario); // Método nativo
         return true;
     }
 }

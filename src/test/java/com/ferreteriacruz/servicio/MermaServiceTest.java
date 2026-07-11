@@ -8,11 +8,10 @@ import java.util.Optional;
 import com.ferreteriacruz.modelo.Producto;
 import com.ferreteriacruz.modelo.Series;
 import com.ferreteriacruz.modelo.MovimientoKardex;
-import com.ferreteriacruz.repository.KardexRepository;
-import com.ferreteriacruz.repository.MermaRepository;
-import com.ferreteriacruz.repository.ProductoRepository;
+import com.ferreteriacruz.dao.KardexDAO;
+import com.ferreteriacruz.dao.MermaDAO;
+import com.ferreteriacruz.dao.ProductoDAO;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -25,13 +24,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class MermaServiceTest {
 
     @Mock
-    private MermaRepository mermaRepository;
+    private MermaDAO mermaDAO;
 
     @Mock
-    private ProductoRepository productoRepository;
+    private ProductoDAO productoDAO;
 
     @Mock
-    private KardexRepository kardexRepository;
+    private KardexDAO kardexDAO;
 
     @InjectMocks
     private MermaService mermaService;
@@ -58,22 +57,22 @@ public class MermaServiceTest {
         producto.setIdProducto(5);
         producto.setStockActual(10);
 
-        when(mermaRepository.findByNumeroSerieAndEstado(nroSerie, "DISPONIBLE"))
+        when(mermaDAO.findByNumeroSerieAndEstado(nroSerie, "DISPONIBLE"))
                 .thenReturn(Optional.of(serie));
 
-        when(productoRepository.findById(5)).thenReturn(Optional.of(producto));
+        when(productoDAO.findById(5)).thenReturn(Optional.of(producto));
 
         mermaService.procesarMerma(nroSerie, "Caducado", 2);
 
-        verify(mermaRepository).save(seriesCaptor.capture());
+        verify(mermaDAO).save(seriesCaptor.capture());
         Series savedSeries = seriesCaptor.getValue();
         assertEquals("MERMA", savedSeries.getEstado());
 
-        verify(productoRepository).save(productoCaptor.capture());
+        verify(productoDAO).save(productoCaptor.capture());
         Producto savedProducto = productoCaptor.getValue();
         assertEquals(9, savedProducto.getStockActual());
 
-        verify(kardexRepository).save(kardexCaptor.capture());
+        verify(kardexDAO).save(kardexCaptor.capture());
         MovimientoKardex mov = kardexCaptor.getValue();
         assertEquals(5, mov.getIdProducto());
         assertEquals("MERMA", mov.getTipoMovimiento());

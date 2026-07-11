@@ -12,8 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ferreteriacruz.modelo.Producto;
 import com.ferreteriacruz.modelo.Series;
-import com.ferreteriacruz.repository.ProductoRepository;
-import com.ferreteriacruz.repository.SeriesRepository;
+import com.ferreteriacruz.dao.ProductoDAO;
+import com.ferreteriacruz.dao.SeriesDAO;
 import com.google.common.base.Preconditions;
 
 @Service
@@ -22,18 +22,18 @@ public class ServicioProducto implements IConsultaStock, IRegistroProducto {
     // Logback (vía SLF4J) - Issue #11
     private static final Logger log = LoggerFactory.getLogger(ServicioProducto.class);
 
-    private final ProductoRepository productoRepository;
-    private final SeriesRepository seriesRepository;
+    private final ProductoDAO productoDAO;
+    private final SeriesDAO seriesDAO;
 
     // Inyección de dependencias por constructor
-    public ServicioProducto(ProductoRepository productoRepository, SeriesRepository seriesRepository) {
-        this.productoRepository = productoRepository;
-        this.seriesRepository = seriesRepository;
+    public ServicioProducto(ProductoDAO productoDAO, SeriesDAO seriesDAO) {
+        this.productoDAO = productoDAO;
+        this.seriesDAO = seriesDAO;
     }
 
     @Override
     public List<Producto> obtenerInventarioActivo() {
-        return productoRepository.findAll(); // Reemplaza pDao.listarProductos()
+        return productoDAO.findAll(); // Reemplaza pDao.listarProductos()
     }
 
     @Override
@@ -47,7 +47,7 @@ public class ServicioProducto implements IConsultaStock, IRegistroProducto {
         p.setStockMinimo(5);
         p.setPrecio(0.0);
         
-        productoRepository.save(p);
+        productoDAO.save(p);
         return true;
     }
     
@@ -74,15 +74,15 @@ public class ServicioProducto implements IConsultaStock, IRegistroProducto {
 
         if (esNuevo) {
             // Guardamos el producto y recuperamos la entidad con el ID autogenerado por MySQL
-            Producto productoGuardado = productoRepository.save(p);
+            Producto productoGuardado = productoDAO.save(p);
             p.setIdProducto(productoGuardado.getIdProducto());
             diferenciaStock = p.getStockActual();
         } else {
             // Buscamos el registro anterior para calcular la diferencia exacta de stock
-            Optional<Producto> prodAnteriorOpt = productoRepository.findById(p.getIdProducto());
+            Optional<Producto> prodAnteriorOpt = productoDAO.findById(p.getIdProducto());
             int stockAnterior = prodAnteriorOpt.map(Producto::getStockActual).orElse(0);
             
-            productoRepository.save(p);
+            productoDAO.save(p);
             diferenciaStock = p.getStockActual() - stockAnterior;
         }
 
@@ -104,7 +104,7 @@ public class ServicioProducto implements IConsultaStock, IRegistroProducto {
         List<Series> listaSeries = new ArrayList<>();
         
         // 1. Averiguamos cuántas cajas de este producto ya existen históricamente en la base de datos
-        long cantidadExistente = seriesRepository.countByIdProducto(idProducto);
+        long cantidadExistente = seriesDAO.countByIdProducto(idProducto);
 
         // 2. Creamos un "Número de Lote Fijo" (Ej: 100000 + 22 = 100022). 
         // Así SIEMPRE será el mismo número grande para este producto en específico.
@@ -126,23 +126,23 @@ public class ServicioProducto implements IConsultaStock, IRegistroProducto {
             listaSeries.add(serie);
         }
         
-        seriesRepository.saveAll(listaSeries);
+        seriesDAO.saveAll(listaSeries);
     }
 
     /**
      * Utiliza la consulta nativa optimizada que reparamos en el repositorio
      */
     private void removerSeriesProducto(int idProducto, int cantidad) {
-        // Ejecutamos el delete transaccional por lotes usando el método del SeriesRepository
+        // Ejecutamos el delete transaccional por lotes usando el método del SeriesDAO
         for (int i = 0; i < cantidad; i++) {
-            seriesRepository.eliminarSeriesExcedentes(idProducto);
+            seriesDAO.eliminarSeriesExcedentes(idProducto);
         }
     }
     
     @Transactional
     public boolean eliminarProducto(int id) {
-        if (productoRepository.existsById(id)) {
-            productoRepository.deleteById(id);
+        if (productoDAO.existsById(id)) {
+            productoDAO.deleteById(id);
             log.info("Producto id={} eliminado del inventario", id);
             return true;
         }
@@ -151,6 +151,6 @@ public class ServicioProducto implements IConsultaStock, IRegistroProducto {
     }
     
     public Producto buscarProducto(int id) {
-        return productoRepository.findById(id).orElse(null);
+        return productoDAO.findById(id).orElse(null);
     }
 }

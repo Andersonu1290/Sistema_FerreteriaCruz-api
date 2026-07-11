@@ -17,15 +17,14 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.ferreteriacruz.modelo.Producto;
-import com.ferreteriacruz.repository.CategoriaRepository;
-import com.ferreteriacruz.repository.ProductoRepository;
-import com.ferreteriacruz.repository.SeriesRepository;
-import com.ferreteriacruz.repository.VentaRepository;
-import com.ferreteriacruz.repository.VentaClienteRepository;
+import com.ferreteriacruz.dao.CategoriaDAO;
+import com.ferreteriacruz.dao.ProductoDAO;
+import com.ferreteriacruz.dao.SeriesDAO;
+import com.ferreteriacruz.dao.VentaDAO;
+import com.ferreteriacruz.dao.VentaClienteDAO;
 import com.ferreteriacruz.modelo.Venta;
 import com.ferreteriacruz.modelo.Categoria;
 import com.google.common.collect.ArrayListMultimap;
@@ -37,17 +36,17 @@ public class ServicioReporte implements IGeneraReporte {
     // Logback (vía SLF4J) - Issue #11
     private static final Logger log = LoggerFactory.getLogger(ServicioReporte.class);
 
-    private final ProductoRepository productoRepository;
-    private final VentaRepository ventaRepository;
-    private final VentaClienteRepository ventaClienteRepository; 
-    private final SeriesRepository seriesRepository;
-    private final CategoriaRepository categoriaRepository;
+    private final ProductoDAO productoRepository;
+    private final VentaDAO ventaRepository;
+    private final VentaClienteDAO ventaClienteRepository; 
+    private final SeriesDAO seriesRepository;
+    private final CategoriaDAO categoriaRepository;
 
-    public ServicioReporte(ProductoRepository productoRepository, 
-                           VentaRepository ventaRepository, 
-                           VentaClienteRepository ventaClienteRepository,
-                           SeriesRepository seriesRepository,
-                           CategoriaRepository categoriaRepository) {
+    public ServicioReporte(ProductoDAO productoRepository, 
+                           VentaDAO ventaRepository, 
+                           VentaClienteDAO ventaClienteRepository,
+                           SeriesDAO seriesRepository,
+                           CategoriaDAO categoriaRepository) {
         this.productoRepository = productoRepository;
         this.ventaRepository = ventaRepository;
         this.ventaClienteRepository = ventaClienteRepository;

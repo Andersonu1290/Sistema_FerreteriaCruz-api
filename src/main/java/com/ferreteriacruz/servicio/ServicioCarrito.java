@@ -6,50 +6,50 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import com.ferreteriacruz.modelo.CarritoItem;
-import com.ferreteriacruz.repository.CarritoRepository;
-import com.ferreteriacruz.repository.ProductoRepository;
+import com.ferreteriacruz.dao.CarritoDAO;
+import com.ferreteriacruz.dao.ProductoDAO;
 
 @Service
 public class ServicioCarrito {
 
-    private final CarritoRepository carritoRepository;
-    private final ProductoRepository productoRepository;
+    private final CarritoDAO carritoDAO;
+    private final ProductoDAO productoDAO;
 
-    public ServicioCarrito(CarritoRepository carritoRepository, ProductoRepository productoRepository) {
-        this.carritoRepository = carritoRepository;
-        this.productoRepository = productoRepository;
+    public ServicioCarrito(CarritoDAO carritoDAO, ProductoDAO productoDAO) {
+        this.carritoDAO = carritoDAO;
+        this.productoDAO = productoDAO;
     }
 
     public List<CarritoItem> obtenerCarritoDeUsuario(int idUsuario) {
-        List<CarritoItem> items = carritoRepository.findByIdUsuario(idUsuario);
+        List<CarritoItem> items = carritoDAO.findByIdUsuario(idUsuario);
         // Llenamos el objeto Producto para que Vue pueda pintar nombres, fotos y precios
         for (CarritoItem item : items) {
-            productoRepository.findById(item.getIdProducto()).ifPresent(item::setProducto);
+            productoDAO.findById(item.getIdProducto()).ifPresent(item::setProducto);
         }
         return items;
     }
 
     public void agregarOActualizarItem(int idUsuario, int idProducto, int cantidadAñadida) {
-        Optional<CarritoItem> existente = carritoRepository.findByIdUsuarioAndIdProducto(idUsuario, idProducto);
+        Optional<CarritoItem> existente = carritoDAO.findByIdUsuarioAndIdProducto(idUsuario, idProducto);
         
         if (existente.isPresent()) {
             CarritoItem item = existente.get();
             item.setCantidad(item.getCantidad() + cantidadAñadida);
-            carritoRepository.save(item);
+            carritoDAO.save(item);
         } else {
             CarritoItem nuevoItem = new CarritoItem();
             nuevoItem.setIdUsuario(idUsuario);
             nuevoItem.setIdProducto(idProducto);
             nuevoItem.setCantidad(cantidadAñadida);
-            carritoRepository.save(nuevoItem);
+            carritoDAO.save(nuevoItem);
         }
     }
 
     public void eliminarItem(int idItem) {
-        carritoRepository.deleteById(idItem);
+        carritoDAO.deleteById(idItem);
     }
 
     public void vaciarCarrito(int idUsuario) {
-        carritoRepository.deleteByIdUsuario(idUsuario);
+        carritoDAO.deleteByIdUsuario(idUsuario);
     }
 }

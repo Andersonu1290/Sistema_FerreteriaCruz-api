@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.ferreteriacruz.modelo.MovimientoKardex;
-import com.ferreteriacruz.repository.KardexRepository;
+import com.ferreteriacruz.dao.KardexDAO;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,7 +20,7 @@ import org.springframework.http.ResponseEntity;
 public class KardexControllerTest {
 
     @Mock
-    private KardexRepository kardexRepository;
+    private KardexDAO kardexDAO;
 
     @InjectMocks
     private KardexController kardexController;
@@ -30,7 +30,7 @@ public class KardexControllerTest {
         Object[] row = new Object[]{1, "SALIDA", 2, LocalDateTime.now(), "Motivo", "Prod", "User"};
         java.util.List<Object[]> lista = new java.util.ArrayList<>();
         lista.add(row);
-        when(kardexRepository.listarHistorialKardex()).thenReturn(lista);
+        when(kardexDAO.listarHistorialKardex()).thenReturn(lista);
 
         ResponseEntity<List<MovimientoKardex>> resp = kardexController.obtenerHistorialKardex();
         assertEquals(200, resp.getStatusCode().value());

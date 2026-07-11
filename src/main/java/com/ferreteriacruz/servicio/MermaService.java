@@ -3,9 +3,9 @@ package com.ferreteriacruz.servicio;
 import com.ferreteriacruz.modelo.Series;
 import com.ferreteriacruz.modelo.Producto;
 import com.ferreteriacruz.modelo.MovimientoKardex;
-import com.ferreteriacruz.repository.MermaRepository;
-import com.ferreteriacruz.repository.ProductoRepository;
-import com.ferreteriacruz.repository.KardexRepository;
+import com.ferreteriacruz.dao.MermaDAO;
+import com.ferreteriacruz.dao.ProductoDAO;
+import com.ferreteriacruz.dao.KardexDAO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,17 +14,17 @@ import java.sql.Timestamp;
 @Service
 public class MermaService {
 
-    private final MermaRepository mermaRepository;
-    private final ProductoRepository productoRepository;
-    private final KardexRepository kardexRepository;
+    private final MermaDAO mermaDAO;
+    private final ProductoDAO productoDAO;
+    private final KardexDAO kardexDAO;
 
     // Inyección de dependencias por constructor
-    public MermaService(MermaRepository mermaRepository, 
-                        ProductoRepository productoRepository, 
-                        KardexRepository kardexRepository) {
-        this.mermaRepository = mermaRepository;
-        this.productoRepository = productoRepository;
-        this.kardexRepository = kardexRepository;
+    public MermaService(MermaDAO mermaDAO, 
+                        ProductoDAO productoDAO, 
+                        KardexDAO kardexDAO) {
+        this.mermaDAO = mermaDAO;
+        this.productoDAO = productoDAO;
+        this.kardexDAO = kardexDAO;
     }
 
     /**
@@ -35,19 +35,19 @@ public class MermaService {
     public void procesarMerma(String nroSerie, String motivo, int idUsuario) throws Exception {
         
         // 1. Validar y obtener la serie en estado disponible
-        Series serie = mermaRepository.findByNumeroSerieAndEstado(nroSerie, "DISPONIBLE")
+        Series serie = mermaDAO.findByNumeroSerieAndEstado(nroSerie, "DISPONIBLE")
                 .orElseThrow(() -> new Exception("La serie '" + nroSerie + "' no está disponible o no existe en el inventario."));
 
         // 2. Cambiar estado de la serie a 'MERMA' y actualizar base de datos
         serie.setEstado("MERMA");
-        mermaRepository.save(serie);
+        mermaDAO.save(serie);
 
         // 3. Descontar el stock actual del producto asociado
-        Producto producto = productoRepository.findById(serie.getIdProducto())
+        Producto producto = productoDAO.findById(serie.getIdProducto())
                 .orElseThrow(() -> new Exception("El producto asociado a la serie ya no existe en el catálogo."));
         
         producto.setStockActual(producto.getStockActual() - 1);
-        productoRepository.save(producto);
+        productoDAO.save(producto);
 
         // 4. Registrar la salida física por descarte en el historial del Kardex
         MovimientoKardex kardex = new MovimientoKardex();
@@ -58,6 +58,6 @@ public class MermaService {
         kardex.setIdUsuario(idUsuario);
         kardex.setFecha(new Timestamp(System.currentTimeMillis()));
         
-        kardexRepository.save(kardex);
+        kardexDAO.save(kardex);
     }
 }
