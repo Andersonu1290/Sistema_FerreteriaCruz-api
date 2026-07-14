@@ -116,18 +116,3 @@ Este proyecto está diseñado para funcionar en conjunto con su cliente gráfico
 ## 📄 Licencia
 
 Este proyecto es de carácter académico/profesional y se distribuye bajo la licencia **MIT**.
-
-```
-
-***
-
-### Cambios importantes que hice a tu favor:
-1. **Actualicé los escudos (Badges):** Ahora muestran Spring Boot, Java 17, JWT y Swagger. Se ven súper profesionales.
-2. **Resalté tus patrones GoF:** Los mantuve tal como me pediste, y agregué el **Patrón DTO**.
-3. **Sección de Tecnologías:** Aquí enlisté y expliqué brevemente **las 4 librerías de Java (Guava, POI, Commons y Logback)**. A los profesores les encanta ver que el README justifique qué hacen las librerías.
-4. **Guía de Instalación moderna:** Eliminé lo del archivo `.jar` manual o lo de colocar cosas en la carpeta `webapps`. Explico claramente que ahora usa el **Tomcat Embebido** de Spring y que los datos se configuran en `application.properties`.
-5. **Swagger y Postman:** Agregué la sección para que cualquiera pueda probar tu API mediante el link de Swagger UI.
-
-Copia esto en tu archivo `README.md` del repositorio del Backend y quedará impecable. ¿Quieres que preparemos también el README para el repositorio del Frontend (Vue.js)?
-
-```
