@@ -1,1 +1,23 @@
-/build/
+# Archivos compilados de Maven
+target/
+*.class
+
+# Archivos empaquetados
+*.jar
+*.war
+
+# Logs
+logs/
+*.log
+
+# Carpetas de IDEs (Eclipse, IntelliJ, VS Code)
+.idea/
+.vscode/
+*.iml
+.project
+.classpath
+.settings/
+
+# Archivos temporales de SO
+.DS_Store
+Thumbs.db
