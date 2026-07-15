@@ -99,7 +99,7 @@ Para consumir la API y obtener un Token JWT, puedes enviar una petición POST al
 ```json
 {
   "username": "admin",
-  "password": "password"
+  "password": "123456"
 }
 
 ```
