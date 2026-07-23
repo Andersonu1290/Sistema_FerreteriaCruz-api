@@ -93,6 +93,7 @@ public class ServicioVenta {
             v.setEstado((String) r[9]);
             v.setNombreCliente((String) r[10]);
             v.setNombreProducto((String) r[11]);
+            v.setDniCliente((String) r[12]);
 
             return v;
 

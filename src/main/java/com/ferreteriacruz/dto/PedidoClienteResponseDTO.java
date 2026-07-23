@@ -24,6 +24,7 @@ public class PedidoClienteResponseDTO {
     private String tipoPago;
     private String tipoTarjeta;
     private String ultimos4Digitos;
+    private String dniCliente;
     private List<DetalleVentaClienteDTO> detalles;
 
     // Constructores
@@ -36,7 +37,7 @@ public class PedidoClienteResponseDTO {
                                      String nombreCliente, String emailCliente, String telefonoCliente,
                                      String direccionEnvio, String ciudad, String departamento,
                                      String tipoEnvio, String numeroSeguimiento, String tipoPago,
-                                     String tipoTarjeta, String ultimos4Digitos) {
+                                     String dniCliente, String tipoTarjeta, String ultimos4Digitos) {
         this.idVentaCliente = idVentaCliente;
         this.nroPedido = nroPedido;
         this.estado = estado;
@@ -56,6 +57,7 @@ public class PedidoClienteResponseDTO {
         this.tipoPago = tipoPago;
         this.tipoTarjeta = tipoTarjeta;
         this.ultimos4Digitos = ultimos4Digitos;
+        this.dniCliente = dniCliente;
     }
 
     // Getters y Setters
@@ -115,6 +117,9 @@ public class PedidoClienteResponseDTO {
 
     public String getUltimos4Digitos() { return ultimos4Digitos; }
     public void setUltimos4Digitos(String ultimos4Digitos) { this.ultimos4Digitos = ultimos4Digitos; }
+
+    public String getDniCliente() { return dniCliente; }
+    public void setDniCliente(String dniCliente) { this.dniCliente = dniCliente; }
 
     public List<DetalleVentaClienteDTO> getDetalles() { return detalles; }
     public void setDetalles(List<DetalleVentaClienteDTO> detalles) { this.detalles = detalles; }

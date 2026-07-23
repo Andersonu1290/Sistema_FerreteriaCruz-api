@@ -12,9 +12,10 @@ import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 
+import com.ferreteriacruz.config.JwtUtil;
+import com.ferreteriacruz.dto.RegistroClienteDTO;
 import com.ferreteriacruz.modelo.Usuario;
 import com.ferreteriacruz.servicio.ServicioUsuario;
-import com.ferreteriacruz.config.JwtUtil; // 🔥 1. AÑADIMOS LA IMPORTACIÓN
 
 @ExtendWith(MockitoExtension.class)
 public class UsuarioControllerTest {
@@ -23,7 +24,7 @@ public class UsuarioControllerTest {
     private ServicioUsuario servicioUsuario;
 
     @Mock
-    private JwtUtil jwtUtil; // 🔥 2. DECLARAMOS EL MOCK DE JWTUTIL
+    private JwtUtil jwtUtil;
 
     @InjectMocks
     private UsuarioController usuarioController;
@@ -44,18 +45,21 @@ public class UsuarioControllerTest {
     }
 
     @Test
-    void registrarClienteDesdeTienda_setsRoleAndDelegates() {
-        Usuario u = new Usuario();
-        u.setUsername("c");
-        u.setPassword("p");
+    void registrarClienteDesdeTienda_setsRoleAndDelegates() throws Exception {
+        // Creamos el DTO tal como lo exige ahora el controlador
+        RegistroClienteDTO dto = new RegistroClienteDTO("c", "p", "70123456", "Juan", "Pérez", "correo@ejemplo.com");
         
-        // Le decimos a los mocks qué deben responder para que la prueba pase
-        when(servicioUsuario.registrarNuevoPersonal(any())).thenReturn(true);
-        when(jwtUtil.generateToken(any(), any())).thenReturn("token-falso-123"); // 🔥 3. SIMULAMOS LA CREACIÓN DEL TOKEN
+        Usuario uMock = new Usuario();
+        uMock.setIdUsuario(1);
+        uMock.setUsername("c");
+        uMock.setRol("CLIENTE");
         
-        ResponseEntity<?> resp = usuarioController.registrarClienteDesdeTienda(u);
+        // Simulamos la respuesta del servicio actualizado
+        when(servicioUsuario.registrarClienteCompleto(any(RegistroClienteDTO.class))).thenReturn(uMock);
+        when(jwtUtil.generateToken(any(), any())).thenReturn("token-falso-123");
+        
+        ResponseEntity<?> resp = usuarioController.registrarClienteDesdeTienda(dto);
         
         assertEquals(201, resp.getStatusCode().value());
-        assertEquals("CLIENTE", u.getRol());
     }
 }

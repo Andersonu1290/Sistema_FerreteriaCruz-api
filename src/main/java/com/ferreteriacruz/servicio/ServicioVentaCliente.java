@@ -166,7 +166,7 @@ public class ServicioVentaCliente {
                     ventaGuardada.getEmailCliente(), ventaGuardada.getTelefonoCliente(), ventaGuardada.getDireccionEnvio(),
                     ventaGuardada.getCiudad(), ventaGuardada.getDepartamento(), ventaGuardada.getTipoEnvio(),
                     ventaGuardada.getNumeroSeguimiento(), ventaGuardada.getTipoPago(), ventaGuardada.getTipoTarjeta(),
-                    ventaGuardada.getUltimos4Digitos()
+                    ventaGuardada.getDniCliente(), ventaGuardada.getUltimos4Digitos()
             );
             response.setDetalles(detallesDTO);
 
@@ -201,8 +201,9 @@ public class ServicioVentaCliente {
                 venta.getEmailCliente(), venta.getTelefonoCliente(), venta.getDireccionEnvio(),
                 venta.getCiudad(), venta.getDepartamento(), venta.getTipoEnvio(),
                 venta.getNumeroSeguimiento(), venta.getTipoPago(), venta.getTipoTarjeta(),
-                venta.getUltimos4Digitos()
+                venta.getDniCliente(), venta.getUltimos4Digitos()
         );
+        response.setDniCliente(venta.getDniCliente());
         response.setDetalles(detallesDTO);
         return response;
     }
@@ -234,8 +235,10 @@ public class ServicioVentaCliente {
                     venta.getEmailCliente(), venta.getTelefonoCliente(), venta.getDireccionEnvio(),
                     venta.getCiudad(), venta.getDepartamento(), venta.getTipoEnvio(),
                     venta.getNumeroSeguimiento(), venta.getTipoPago(), venta.getTipoTarjeta(),
+                    venta.getDniCliente(),
                     venta.getUltimos4Digitos()
             );
+            response.setDniCliente(venta.getDniCliente());
             response.setDetalles(detallesDTO);
             return response;
         }).collect(Collectors.toList());
@@ -372,8 +375,10 @@ public class ServicioVentaCliente {
                     venta.getEmailCliente(), venta.getTelefonoCliente(), venta.getDireccionEnvio(),
                     venta.getCiudad(), venta.getDepartamento(), venta.getTipoEnvio(),
                     venta.getNumeroSeguimiento(), venta.getTipoPago(), venta.getTipoTarjeta(),
+                    venta.getDniCliente(),
                     venta.getUltimos4Digitos()
             );
+            response.setDniCliente(venta.getDniCliente());
             response.setDetalles(detallesDTO);
             return response;
             

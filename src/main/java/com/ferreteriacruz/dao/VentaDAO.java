@@ -20,12 +20,12 @@ public interface VentaDAO extends JpaRepository<Venta, Integer> {
      */
     @Query(value = "SELECT v.id_venta, v.id_cliente, v.id_usuario, v.id_producto, v.nro_serie, " +
                    "v.nro_comprobante, v.metodo_pago, v.total, v.fecha_venta, v.estado, " +
-                   "c.nombre_completo AS nombre_cliente, p.nombre AS nombre_producto " +
+                   "c.nombre_completo AS nombre_cliente, p.nombre AS nombre_producto, c.documento_identidad AS dni_cliente " +
                    "FROM ventas v " +
                    "INNER JOIN clientes c ON v.id_cliente = c.id_cliente " +
                    "INNER JOIN productos p ON v.id_producto = p.id_producto " +
                    "ORDER BY v.fecha_venta DESC", nativeQuery = true)
-    List<Object[]> listarVentasConNombres(); 
+    List<Object[]> listarVentasConNombres();
 
     /* =========================================================================
        📊 SECCIÓN DE CONSULTAS PARA REPORTES 

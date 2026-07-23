@@ -63,6 +63,9 @@ public class Venta {
         return this.total;
     }
 
+    @Transient
+    private String dniCliente;
+
     // ... (Mantén exactamente los mismos Getters y Setters que ya tenías) ...
 
     public int getId() { return id; }
@@ -89,4 +92,6 @@ public class Venta {
     public void setNombreCliente(String nombreCliente) { this.nombreCliente = nombreCliente; }
     public String getNombreProducto() { return nombreProducto; }
     public void setNombreProducto(String nombreProducto) { this.nombreProducto = nombreProducto; }
+    public String getDniCliente() { return dniCliente; }
+    public void setDniCliente(String dniCliente) { this.dniCliente = dniCliente; }
 }

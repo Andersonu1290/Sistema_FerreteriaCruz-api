@@ -111,27 +111,24 @@ class VentaClienteControllerTest {
     }
 
     private PedidoClienteResponseDTO crearResponse() {
-        PedidoClienteResponseDTO response = new PedidoClienteResponseDTO(
-                15,
-                "PED-2026-00015",
-                "PENDIENTE",
-                LocalDateTime.of(2026, 7, 4, 10, 30),
-                LocalDate.of(2026, 7, 9),
-                30.0,
-                5.0,
-                35.0,
-                "Ana",
-                "ana@example.com",
-                "999999999",
-                "Av. Principal 123",
-                "Lima",
-                "Lima",
-                "NORMAL",
-                null,
-                "YAPE",
-                null,
-                null
-        );
+        PedidoClienteResponseDTO response = new PedidoClienteResponseDTO();
+        response.setIdVentaCliente(15);
+        response.setNroPedido("PED-2026-00015");
+        response.setEstado("PENDIENTE");
+        response.setFechaPedido(LocalDateTime.of(2026, 7, 4, 10, 30));
+        response.setSubtotal(30.0);
+        response.setCostoEnvio(5.0);
+        response.setTotal(35.0);
+        response.setNombreCliente("Ana Perez");
+        response.setDniCliente("12345678");
+        response.setEmailCliente("ana@example.com");
+        response.setTelefonoCliente("999999999");
+        response.setDireccionEnvio("Av. Principal 123");
+        response.setCiudad("Lima");
+        response.setDepartamento("Lima");
+        response.setTipoEnvio("NORMAL");
+        response.setTipoPago("YAPE");
+        
         response.setDetalles(List.of(
                 new DetalleVentaClienteDTO(1, 1, "Gel Antibacterial", 2, 15.0, 30.0, 0.0)
         ));

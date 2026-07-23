@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ferreteriacruz.config.JwtUtil; // 🔥 1. IMPORTANTE AÑADIR ESTO
 import com.ferreteriacruz.modelo.Usuario;
 import com.ferreteriacruz.servicio.ServicioUsuario;
+import com.ferreteriacruz.dto.RegistroClienteDTO;
 
 @RestController
 @RequestMapping("/api/v1/usuarios")
@@ -64,40 +66,46 @@ public class UsuarioController {
      * Endpoint: POST /api/v1/usuarios/registro-tienda
      * Ahora devuelve el Token JWT para que el frontend haga Auto-Login.
      */
+        
     @PostMapping("/registro-tienda")
-    public ResponseEntity<?> registrarClienteDesdeTienda(@RequestBody Usuario nuevoUsuario) {
+    public ResponseEntity<?> registrarClienteDesdeTienda(@RequestBody RegistroClienteDTO dto) {
         try {
-            if (nuevoUsuario.getUsername() == null || nuevoUsuario.getPassword() == null) {
+            if (dto.username() == null || dto.password() == null || dto.dni() == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(Map.of("error", "El usuario y la contraseña son obligatorios."));
+                        .body(Map.of("error", "Faltan campos obligatorios para el registro."));
             }
 
-            nuevoUsuario.setRol("CLIENTE");
+            // Llamamos al nuevo servicio que guarda en ambas tablas
+            Usuario nuevoUsuario = servicioUsuario.registrarClienteCompleto(dto);
 
-            boolean registrado = servicioUsuario.registrarNuevoPersonal(nuevoUsuario);
+            // Generamos el Token
+            String token = jwtUtil.generateToken(nuevoUsuario.getUsername(), nuevoUsuario.getRol());
+            nuevoUsuario.setPassword(null); // Limpiamos la clave por seguridad
 
-            if (registrado) {
-                // 🔥 4. GENERAR TOKEN AUTOMÁTICAMENTE
-                String token = jwtUtil.generateToken(nuevoUsuario.getUsername(), nuevoUsuario.getRol());
-                
-                // Limpiar la contraseña por seguridad antes de mandar el JSON
-                nuevoUsuario.setPassword(null);
-
-                // 🔥 5. DEVOLVER EL TOKEN Y EL USUARIO IGUAL QUE EN EL LOGIN
-                return ResponseEntity.status(HttpStatus.CREATED)
-                        .body(Map.of(
-                                "mensaje", "Tu cuenta de cliente ha sido creada exitosamente.",
-                                "token", token,
-                                "usuario", nuevoUsuario
-                        ));
-            } else {
-                return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(Map.of("error", "El nombre de usuario '" + nuevoUsuario.getUsername() + "' ya existe."));
-            }
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(Map.of(
+                            "mensaje", "Tu cuenta de cliente ha sido creada exitosamente.",
+                            "token", token,
+                            "usuario", nuevoUsuario
+                    ));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", "Error al procesar el registro: " + e.getMessage()));
+        }
+    }
+    @GetMapping("/perfil/{idUsuario}")
+    public ResponseEntity<?> obtenerPerfilCliente(@PathVariable int idUsuario) {
+        try {
+            com.ferreteriacruz.modelo.UsuarioCliente perfil = servicioUsuario.obtenerPerfilCliente(idUsuario);
+            if (perfil != null) {
+                return ResponseEntity.ok(perfil);
+            }
+            // Si devuelve 204 No Content, el frontend sabrá que es un empleado o un usuario sin datos
+            return ResponseEntity.noContent().build(); 
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Error al obtener perfil: " + e.getMessage()));
         }
     }
 }

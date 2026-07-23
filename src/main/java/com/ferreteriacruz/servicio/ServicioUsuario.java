@@ -10,9 +10,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ferreteriacruz.modelo.Usuario;
+import com.ferreteriacruz.modelo.UsuarioCliente;
 import com.ferreteriacruz.dao.UsuarioDAO;
+import com.ferreteriacruz.dao.UsuarioClienteDAO;
+import com.ferreteriacruz.dto.RegistroClienteDTO;
 import com.google.common.base.Preconditions;
 
 @Service // Marca esta clase como un componente de servicio de Spring
@@ -22,12 +26,14 @@ public class ServicioUsuario {
     private static final Logger log = LoggerFactory.getLogger(ServicioUsuario.class);
 
     private final UsuarioDAO usuarioDAO;
+    private final UsuarioClienteDAO usuarioClienteDAO;
     private final PasswordEncoder passwordEncoder;
 
     // Inyección de dependencias por constructor (Recomendado en Spring)
     @Autowired
-    public ServicioUsuario(UsuarioDAO usuarioDAO, PasswordEncoder passwordEncoder) {
+    public ServicioUsuario(UsuarioDAO usuarioDAO, UsuarioClienteDAO usuarioClienteDAO, PasswordEncoder passwordEncoder) {
         this.usuarioDAO = usuarioDAO;
+        this.usuarioClienteDAO = usuarioClienteDAO;
         this.passwordEncoder = passwordEncoder != null ? passwordEncoder : new BCryptPasswordEncoder();
     }
 
@@ -86,5 +92,44 @@ public class ServicioUsuario {
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
         usuarioDAO.save(usuario); // Método nativo
         return true;
+    }
+
+    // =========================================================
+    // NUEVO MÉTODO FULL-STACK: Registro Real de Clientes
+    // Mantiene el estándar estricto de Guava y Apache Commons
+    // =========================================================
+    @Transactional(rollbackFor = Exception.class)
+    public Usuario registrarClienteCompleto(RegistroClienteDTO dto) throws Exception {
+        Preconditions.checkNotNull(dto, "Los datos de registro no pueden ser nulos");
+        Preconditions.checkArgument(StringUtils.isNotBlank(dto.username()), "El usuario es obligatorio");
+        Preconditions.checkArgument(StringUtils.isNotBlank(dto.password()), "La contraseña es obligatoria");
+        Preconditions.checkArgument(StringUtils.isNotBlank(dto.dni()), "El DNI es obligatorio");
+        Preconditions.checkArgument(StringUtils.isNotBlank(dto.apellido()), "El apellido es obligatorio"); // NUEVO
+
+        String cleanUser = StringUtils.trim(dto.username());
+        
+        if (usuarioDAO.existsByUsername(cleanUser)) {
+            throw new Exception("El nombre de usuario ya existe.");
+        }
+
+        Usuario u = new Usuario();
+        u.setUsername(cleanUser);
+        u.setPassword(passwordEncoder.encode(dto.password()));
+        u.setRol("CLIENTE");
+        Usuario usuarioGuardado = usuarioDAO.save(u);
+
+        UsuarioCliente uc = new UsuarioCliente();
+        uc.setIdUsuario(usuarioGuardado.getIdUsuario());
+        uc.setDni(StringUtils.trim(dto.dni()));
+        uc.setNombreCompleto(StringUtils.normalizeSpace(dto.nombre()));
+        uc.setApellido(StringUtils.normalizeSpace(dto.apellido()));
+        uc.setCorreo(StringUtils.trim(dto.correo()).toLowerCase());
+        usuarioClienteDAO.save(uc);
+
+        return usuarioGuardado;
+    }
+
+    public UsuarioCliente obtenerPerfilCliente(int idUsuario) {
+        return usuarioClienteDAO.findByIdUsuario(idUsuario).orElse(null);
     }
 }
