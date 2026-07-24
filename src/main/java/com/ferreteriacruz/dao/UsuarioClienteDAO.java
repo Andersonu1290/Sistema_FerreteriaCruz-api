@@ -9,4 +9,7 @@ import java.util.Optional;
 public interface UsuarioClienteDAO extends JpaRepository<UsuarioCliente, Integer> {
     // Para cuando queramos buscar los datos personales usando el ID del login
     Optional<UsuarioCliente> findByIdUsuario(int idUsuario);
+
+    // NUEVO: Para la recuperación de contraseña
+    Optional<UsuarioCliente> findByCorreo(String correo);
 }

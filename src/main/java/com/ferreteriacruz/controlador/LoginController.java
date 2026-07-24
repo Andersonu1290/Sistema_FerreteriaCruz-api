@@ -75,4 +75,32 @@ public class LoginController {
         // En una API REST, el cierre de sesión es responsabilidad del cliente borrando sus credenciales locales
         return ResponseEntity.ok(Map.of("mensaje", "Sesión finalizada. Recuerde eliminar el token en el cliente."));
     }
+
+    /**
+     * Endpoint: POST /api/v1/auth/recuperar-password
+     * Genera una clave temporal y la devuelve al frontend.
+     */
+    @PostMapping("/recuperar-password")
+    public ResponseEntity<?> recuperarPassword(@RequestBody Map<String, String> payload) {
+        try {
+            String correo = payload.get("correo");
+            if (correo == null || correo.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "El correo electrónico es obligatorio."));
+            }
+
+            // Llamamos al servicio que hace toda la lógica y nos devuelve la clave generada
+            String nuevaPassword = servicioUsuario.recuperarPassword(correo);
+
+            // Devolvemos el mensaje de éxito inyectando la nueva clave para que el cliente la vea
+            return ResponseEntity.ok(Map.of(
+                    "mensaje", "Tu contraseña temporal es: " + nuevaPassword + " (Cópiala e inicia sesión)"
+            ));
+
+        } catch (Exception e) {
+            // Si el correo no existe, devolvemos un 404 Not Found
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
 }

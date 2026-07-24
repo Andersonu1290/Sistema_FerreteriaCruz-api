@@ -11,6 +11,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.apache.commons.lang3.RandomStringUtils;
 
 import com.ferreteriacruz.modelo.Usuario;
 import com.ferreteriacruz.modelo.UsuarioCliente;
@@ -131,5 +132,33 @@ public class ServicioUsuario {
 
     public UsuarioCliente obtenerPerfilCliente(int idUsuario) {
         return usuarioClienteDAO.findByIdUsuario(idUsuario).orElse(null);
+    }
+
+    // =========================================================
+    // NUEVO: Recuperación de contraseña temporal
+    // =========================================================
+    @Transactional(rollbackFor = Exception.class)
+    public String recuperarPassword(String correo) throws Exception {
+        Preconditions.checkArgument(StringUtils.isNotBlank(correo), "El correo es obligatorio");
+
+        // 1. Buscar el cliente por correo
+        UsuarioCliente cliente = usuarioClienteDAO.findByCorreo(correo.trim().toLowerCase())
+                .orElseThrow(() -> new Exception("No existe ninguna cuenta asociada a este correo."));
+
+        // 2. Buscar las credenciales del usuario de login
+        Usuario usuario = usuarioDAO.findById(cliente.getIdUsuario())
+                .orElseThrow(() -> new Exception("Usuario no encontrado en el sistema."));
+
+        // 3. Generar nueva contraseña temporal alfanumérica de 8 caracteres
+        String passwordTemporal = RandomStringUtils.randomAlphanumeric(8);
+
+        // 4. Encriptar y actualizar en la Base de Datos
+        usuario.setPassword(passwordEncoder.encode(passwordTemporal));
+        usuarioDAO.save(usuario);
+
+        log.info("Se generó una contraseña temporal para el usuario ID: {}", usuario.getIdUsuario());
+
+        // 5. Devolver la contraseña en texto plano para mostrarla en la pantalla
+        return passwordTemporal;
     }
 }
